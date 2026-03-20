@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    {% if other_user.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + other_user.profile_picture) }}" 
+                         alt="{{ other_user.name }}" 
+                         class="rounded-circle me-3" 
+                         style="width: 40px; height: 40px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px;">
+                        {{ other_user.name[0]|upper }}
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-0">{{ other_user.name }}</h5>
+                        <small class="text-muted">{{ other_user.email }}</small>
+                    </div>
+                </div>
+                <a href="{{ url_for('messages') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Messages
+                </a>
+            </div>
+            
+            <div class="card-body" style="height: 400px; overflow-y: auto;" id="messageContainer">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="d-flex mb-3 {% if message.sender_id == session.user_id %}justify-content-end{% endif %}">
+                        <div class="{% if message.sender_id == session.user_id %}text-end{% endif %}" style="max-width: 70%;">
+                            <div class="d-flex align-items-center {% if message.sender_id == session.user_id %}justify-content-end{% endif %} mb-1">
+                                <small class="text-muted me-2">{{ message.sender.name }}</small>
+                                <small class="text-muted">{{ message.timestamp.strftime('%I:%M %p') }}</small>
+                            </div>
+                            <div class="p-3 rounded {% if message.sender_id == session.user_id %}bg-primary text-white{% else %}bg-light{% endif %}">
+                                {{ message.content }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No messages yet. Start the conversation!</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-footer">
+                <form method="POST" class="d-flex">
+                    <input type="text" name="content" class="form-control me-2" placeholder="Type your message..." required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Scroll to bottom of messages
+document.addEventListener('DOMContentLoaded', function() {
+    const messageContainer = document.getElementById('messageContainer');
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+});
+</script>
+{% endblock %}

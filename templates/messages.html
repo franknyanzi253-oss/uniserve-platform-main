@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-comments me-2"></i>Messages</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Conversations</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if conversations %}
+                    <div class="list-group list-group-flush">
+                        {% for conv in conversations %}
+                        <a href="{{ url_for('conversation', user_id=conv.user.id) }}" 
+                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if conv.user.profile_picture %}
+                                <img src="{{ url_for('static', filename='uploads/profile_pictures/' + conv.user.profile_picture) }}" 
+                                     alt="{{ conv.user.name }}" 
+                                     class="rounded-circle me-3" 
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                    {{ conv.user.name[0]|upper }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ conv.user.name }}</h6>
+                                    <small class="text-muted">
+                                        {% if conv.last_message %}
+                                            {{ conv.last_message.content[:30] }}{% if conv.last_message.content|length > 30 %}...{% endif %}
+                                        {% else %}
+                                            No messages yet
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            {% if conv.unread_count > 0 %}
+                            <span class="badge bg-primary rounded-pill">{{ conv.unread_count }}</span>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No conversations yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-comment-dots fa-3x text-muted mb-3"></i>
+                <h5>Select a conversation</h5>
+                <p class="text-muted">Choose a conversation from the list to start messaging</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

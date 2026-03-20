@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-inbox me-2"></i>Service Requests</h2>
+            <span class="badge bg-primary">{{ requests|length }} request{{ 's' if requests|length != 1 else '' }}</span>
+        </div>
+    </div>
+</div>
+
+{% if requests %}
+<div class="row">
+    {% for request in requests %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">{{ request.service.title }}</h6>
+                <span class="badge bg-{{ 'warning' if request.status == 'pending' else 'success' if request.status == 'accepted' else 'info' if request.status == 'completed' else 'secondary' }}">
+                    {{ request.status|title }}
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="card-text"><strong>From:</strong> 
+                    <a href="{{ url_for('profile', user_id=request.seeker.id) }}">{{ request.seeker.name }}</a>
+                </p>
+                <p class="card-text"><strong>Message:</strong> {{ request.message }}</p>
+                <p class="card-text"><strong>Requested:</strong> {{ request.request_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                
+                <div class="mb-3">
+                    <strong>Contact Information:</strong>
+                    <p class="mb-1">{{ request.seeker.email }}</p>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if request.status == 'pending' %}
+                        <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
+                            <button type="submit" name="status" value="accepted" class="btn btn-success btn-sm">
+                                <i class="fas fa-check me-1"></i>Accept
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
+                            <button type="submit" name="status" value="cancelled" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-times me-1"></i>Decline
+                            </button>
+                        </form>
+                        {% elif request.status == 'accepted' %}
+                        <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
+                            <button type="submit" name="status" value="completed" class="btn btn-info btn-sm">
+                                <i class="fas fa-check-double me-1"></i>Mark Complete
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{{ url_for('conversation', user_id=request.seeker.id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-comment me-1"></i>Message
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <h5>No service requests yet</h5>
+        <p class="text-muted">When students request your services, they'll appear here.</p>
+        <a href="{{ url_for('services') }}" class="btn btn-primary">Browse Services</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

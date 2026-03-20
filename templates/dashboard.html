@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Welcome, {{ user.name }}!</h2>
+                <p class="lead mb-0">You are logged in as a <span class="badge bg-info">{{ user.user_type|title }}</span>.</p>
+                <small class="text-muted">Member since {{ user.registration_date.strftime('%B %d, %Y') }}</small>
+            </div>
+            <div class="text-end">
+                {% if user.user_type == 'provider' %}
+                <a href="{{ url_for('add_service') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Service
+                </a>
+                {% else %}
+                <a href="{{ url_for('services') }}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Browse Services
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.user_type == 'provider' %}
+<!-- Provider Dashboard -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Services ({{ services|length }})</h5>
+                <a href="{{ url_for('add_service') }}" class="btn btn-sm btn-primary">Add Service</a>
+            </div>
+            <div class="card-body">
+                {% if services %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for service in services %}
+                            <tr>
+                                <td>
+                                    <strong>{{ service.title }}</strong>
+                                    <br><small class="text-muted">{{ service.description[:50] }}...</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ service.category }}</span>
+                                </td>
+                                <td>{{ service.price }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if service.is_active else 'secondary' }}">
+                                        {{ 'Active' if service.is_active else 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td>{{ service.created_date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-briefcase fa-3x text-muted"></i>
+                    </div>
+                    <h5>No services yet</h5>
+                    <p class="text-muted">Start offering your skills to other students!</p>
+                    <a href="{{ url_for('add_service') }}" class="btn btn-primary">Add Your First Service</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ services|length }}</h4>
+                            <small class="text-muted">Services</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">0</h4>
+                        <small class="text-muted">Requests</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('add_service') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Service
+                    </a>
+                    <a href="{{ url_for('services') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> Browse All Services
+                    </a>
+                    <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-user"></i> View Your Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Seeker Dashboard -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Your Service Requests ({{ requests|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if requests %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th>Provider</th>
+                                <th>Message</th>
+                                <th>Status</th>
+                                <th>Requested</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in requests %}
+                            <tr>
+                                <td>
+                                    <strong>{{ request.service.title }}</strong>
+                                    <br><small class="text-muted">{{ request.service.category }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('profile', user_id=request.service.provider.id) }}">
+                                        {{ request.service.provider.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <small>{{ request.message[:50] }}...</small>
+                                </td>
+                                <td>
+                                    {% if request.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% elif request.status == 'accepted' %}
+                                    <span class="badge bg-success">Accepted</span>
+                                    {% elif request.status == 'completed' %}
+                                    <span class="badge bg-info">Completed</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ request.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ request.request_date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-inbox fa-3x text-muted"></i>
+                    </div>
+                    <h5>No service requests yet</h5>
+                    <p class="text-muted">Find services you need and send requests!</p>
+                    <a href="{{ url_for('services') }}" class="btn btn-primary">Browse Services</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Your Activity</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ requests|length }}</h4>
+                            <small class="text-muted">Requests</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">0</h4>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('services') }}" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Find Services
+                    </a>
+                    <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user"></i> Your Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

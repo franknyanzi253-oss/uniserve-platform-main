@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5>Filter Services</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" id="filterForm">
+                    <div class="mb-3">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ request.args.get('search', '') }}" 
+                               placeholder="Search services...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category[0] }}" 
+                                        {% if request.args.get('category') == category[0] %}selected{% endif %}>
+                                    {{ category[0] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                    <a href="{{ url_for('services') }}" class="btn btn-outline-secondary w-100 mt-2">Clear Filters</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Available Services</h2>
+            <span class="badge bg-primary">{{ services|length }} services found</span>
+        </div>
+        
+        {% if services %}
+            <div class="row" id="services-container">
+                {% for service in services %}
+                <div class="col-md-6 mb-4 service-card" data-category="{{ service.category }}">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ service.title }}</h5>
+                            <p class="card-text">{{ service.description }}</p>
+                            <div class="mb-2">
+                                <span class="badge bg-info service-category">{{ service.category }}</span>
+                                {% if service.price and service.price != 'Free' %}
+                                <span class="badge bg-success">Price: {{ service.price }}</span>
+                                {% endif %}
+                            </div>
+                            <p class="card-text"><strong>📍 Location:</strong> {{ service.location }}</p>
+                            <p class="card-text"><strong>📞 Contact:</strong> {{ service.contact_info }}</p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    Offered by: {{ service.provider.name }} • 
+                                    {{ service.created_date.strftime('%Y-%m-%d') }}
+                                </small>
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ url_for('profile', user_id=service.provider.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                View Provider
+                            </a>
+                            {% if session.user_id and session.user_type == 'seeker' %}
+                                <button type="button" class="btn btn-sm btn-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#requestModal{{ service.id }}">
+                                    Request Service
+                                </button>
+                            {% elif not session.user_id %}
+                                <a href="{{ url_for('login') }}" class="btn btn-sm btn-primary">
+                                    Login to Request
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Request Service Modal -->
+                    {% if session.user_id and session.user_type == 'seeker' %}
+                    <div class="modal fade" id="requestModal{{ service.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Request Service: {{ service.title }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('request_service') }}">
+                                    <div class="modal-body">
+                                        <input type="hidden" name="service_id" value="{{ service.id }}">
+                                        <div class="mb-3">
+                                            <label for="message{{ service.id }}" class="form-label">
+                                                Message to Provider
+                                            </label>
+                                            <textarea class="form-control" id="message{{ service.id }}" 
+                                                      name="message" rows="4" 
+                                                      placeholder="Hello, I'm interested in your service. Please let me know when you're available..."
+                                                      required></textarea>
+                                            <div class="form-text">
+                                                Introduce yourself and specify what you need.
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info">
+                                            <small>
+                                                <strong>Provider:</strong> {{ service.provider.name }}<br>
+                                                <strong>Contact:</strong> {{ service.contact_info }}<br>
+                                                <strong>Price:</strong> {{ service.price }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Send Request</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">
+                <h4>No services found</h4>
+                <p>No services match your search criteria. Try adjusting your filters or check back later.</p>
+                {% if session.user_id and session.user_type == 'provider' %}
+                <a href="{{ url_for('add_service') }}" class="btn btn-primary">Be the first to add a service!</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

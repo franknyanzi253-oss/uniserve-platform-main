@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Add New Service</h4>
+                <p class="mb-0 text-muted">Offer your skills and earn from fellow students</p>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <!-- Service Title -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Service Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               placeholder="e.g., Python Tutoring, Graphic Design, Computer Repair"
+                               required>
+                        <div class="form-text">Choose a clear and descriptive title for your service.</div>
+                    </div>
+                    
+                    <!-- Service Description -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Service Description *</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4" placeholder="Describe what you offer in detail..."
+                                  required></textarea>
+                        <div class="form-text">Be specific about what students will get. Minimum 10 characters.</div>
+                        <small class="text-muted float-end"><span id="charCount">0</span>/500 characters</small>
+                    </div>
+                    
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category *</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="Tutoring">🎓 Tutoring & Academic Help</option>
+                            <option value="Graphic Design">🎨 Graphic Design</option>
+                            <option value="Computer Repair">💻 Computer Repair & IT Support</option>
+                            <option value="Writing">✍️ Writing & Editing</option>
+                            <option value="Photography">📸 Photography</option>
+                            <option value="Laundry">👕 Laundry Services</option>
+                            <option value="Hostel Broker">🏠 Hostel Broker</option>
+                            <option value="Transport">🚗 Transport & Delivery</option>
+                            <option value="Beauty">💄 Beauty & Hairstyling</option>
+                            <option value="Fitness">💪 Fitness Training</option>
+                            <option value="Music">🎵 Music Lessons</option>
+                            <option value="Other">🔧 Other Services</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price *</label>
+                        <input type="text" class="form-control" id="price" name="price" 
+                               placeholder="e.g., UGX 10,000, UGX 5,000/hour, Free"
+                               required>
+                        <div class="form-text">Specify your pricing. Use 'Free' if you're offering for free.</div>
+                    </div>
+                    
+                    <!-- Location -->
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Service Location *</label>
+                        <input type="text" class="form-control" id="location" name="location" 
+                               placeholder="e.g., Main Campus, Library, Hostel Zone A, Online"
+                               required>
+                        <div class="form-text">Where will you provide this service?</div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="mb-3">
+                        <label for="contact_info" class="form-label">Contact Information *</label>
+                        <input type="text" class="form-control" id="contact_info" name="contact_info" 
+                               placeholder="e.g., Phone: 0700123456, WhatsApp, Telegram, Email"
+                               required>
+                        <div class="form-text">How should students contact you? (This will be visible to all users)</div>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Service</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Tips Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">💡 Tips for a Great Service Listing</h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Be specific</strong> about what you offer</li>
+                    <li><strong>Set reasonable prices</strong> for student budgets</li>
+                    <li><strong>Include clear contact information</strong></li>
+                    <li><strong>Specify your availability</strong> and location</li>
+                    <li><strong>Respond promptly</strong> to service requests</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Character counter for description
+document.getElementById('description').addEventListener('input', function() {
+    const length = this.value.length;
+    document.getElementById('charCount').textContent = length;
+});
+</script>
+{% endblock %}
