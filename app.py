@@ -102,6 +102,10 @@ class Message(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
 
+# Ensure tables are created automatically on import (solves database initialization on Render)
+with app.app_context():
+    db.create_all()
+
 # Routes (Keep all your existing routes exactly as they are)
 @app.route('/')
 def index():
