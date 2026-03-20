@@ -1,103 +1,106 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="mb-0">Add New Service</h4>
-                <p class="mb-0 text-muted">Offer your skills and earn from fellow students</p>
+<div class="row justify-content-center pt-3 fade-up">
+    <div class="col-lg-8 col-md-10">
+        <div class="modern-card border-0 bg-white shadow-sm overflow-hidden mb-4">
+            <div class="bg-primary bg-opacity-10 p-4 p-md-5 position-relative">
+                <div class="position-absolute top-0 end-0 h-100" style="width: 200px; background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.1), transparent 70%);"></div>
+                <h4 class="fw-bold text-dark mb-1 position-relative" style="z-index: 1;">Add New Service</h4>
+                <p class="mb-0 text-muted position-relative" style="z-index: 1;">Offer your skills and earn from fellow students</p>
             </div>
-            <div class="card-body">
+            <div class="p-4 p-md-5 bg-white position-relative">
                 <form method="POST">
                     <!-- Service Title -->
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Service Title *</label>
-                        <input type="text" class="form-control" id="title" name="title" 
-                               placeholder="e.g., Python Tutoring, Graphic Design, Computer Repair"
+                    <div class="mb-4">
+                        <label for="title" class="form-label fw-semibold text-dark small text-uppercase tracking-wide">Service Title *</label>
+                        <input type="text" class="form-control border-secondary border-opacity-25 shadow-none py-2" id="title" name="title" 
+                               placeholder="e.g., Python Tutoring, Graphic Design"
                                required>
-                        <div class="form-text">Choose a clear and descriptive title for your service.</div>
+                        <div class="form-text small py-1"><i class="fas fa-info-circle text-primary me-1"></i> Choose a clear and descriptive title.</div>
                     </div>
                     
                     <!-- Service Description -->
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Service Description *</label>
-                        <textarea class="form-control" id="description" name="description" 
-                                  rows="4" placeholder="Describe what you offer in detail..."
+                    <div class="mb-4">
+                        <label for="description" class="form-label fw-semibold text-dark small text-uppercase tracking-wide">Service Description *</label>
+                        <textarea class="form-control border-secondary border-opacity-25 shadow-none p-3" id="description" name="description" 
+                                  rows="5" placeholder="Describe what you offer in detail..."
                                   required></textarea>
-                        <div class="form-text">Be specific about what students will get. Minimum 10 characters.</div>
-                        <small class="text-muted float-end"><span id="charCount">0</span>/500 characters</small>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <div class="form-text small mb-0">Be specific about what students will get.</div>
+                            <small class="text-muted fw-medium"><span id="charCount">0</span>/500 characters</small>
+                        </div>
                     </div>
                     
-                    <!-- Category -->
-                    <div class="mb-3">
-                        <label for="category" class="form-label">Category *</label>
-                        <select class="form-select" id="category" name="category" required>
-                            <option value="">Select Category</option>
-                            <option value="Tutoring">🎓 Tutoring & Academic Help</option>
-                            <option value="Graphic Design">🎨 Graphic Design</option>
-                            <option value="Computer Repair">💻 Computer Repair & IT Support</option>
-                            <option value="Writing">✍️ Writing & Editing</option>
-                            <option value="Photography">📸 Photography</option>
-                            <option value="Laundry">👕 Laundry Services</option>
-                            <option value="Hostel Broker">🏠 Hostel Broker</option>
-                            <option value="Transport">🚗 Transport & Delivery</option>
-                            <option value="Beauty">💄 Beauty & Hairstyling</option>
-                            <option value="Fitness">💪 Fitness Training</option>
-                            <option value="Music">🎵 Music Lessons</option>
-                            <option value="Other">🔧 Other Services</option>
-                        </select>
+                    <!-- Category & Price Row -->
+                    <div class="row g-4 mb-4">
+                        <!-- Category -->
+                        <div class="col-md-6">
+                            <label for="category" class="form-label fw-semibold text-dark small text-uppercase tracking-wide">Category *</label>
+                            <select class="form-select border-secondary border-opacity-25 shadow-none py-2" id="category" name="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Tutoring">🎓 Tutoring & Academic Help</option>
+                                <option value="Graphic Design">🎨 Graphic Design</option>
+                                <option value="Computer Repair">💻 Computer Repair & IT Support</option>
+                                <option value="Writing">✍️ Writing & Editing</option>
+                                <option value="Photography">📸 Photography</option>
+                                <option value="Laundry">👕 Laundry Services</option>
+                                <option value="Hostel Broker">🏠 Hostel Broker</option>
+                                <option value="Transport">🚗 Transport & Delivery</option>
+                                <option value="Beauty">💄 Beauty & Hairstyling</option>
+                                <option value="Fitness">💪 Fitness Training</option>
+                                <option value="Music">🎵 Music Lessons</option>
+                                <option value="Other">🔧 Other Services</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Price -->
+                        <div class="col-md-6">
+                            <label for="price" class="form-label fw-semibold text-dark small text-uppercase tracking-wide">Price *</label>
+                            <input type="text" class="form-control border-secondary border-opacity-25 shadow-none py-2" id="price" name="price" 
+                                   placeholder="e.g., UGX 10,000, UGX 5,000/hr, Free"
+                                   required>
+                        </div>
                     </div>
                     
-                    <!-- Price -->
-                    <div class="mb-3">
-                        <label for="price" class="form-label">Price *</label>
-                        <input type="text" class="form-control" id="price" name="price" 
-                               placeholder="e.g., UGX 10,000, UGX 5,000/hour, Free"
-                               required>
-                        <div class="form-text">Specify your pricing. Use 'Free' if you're offering for free.</div>
+                    <!-- Location & Contact Row -->
+                    <div class="row g-4 mb-5">
+                        <!-- Location -->
+                        <div class="col-md-6">
+                            <label for="location" class="form-label fw-semibold text-dark small text-uppercase tracking-wide">Service Location *</label>
+                            <input type="text" class="form-control border-secondary border-opacity-25 shadow-none py-2" id="location" name="location" 
+                                   placeholder="e.g., Main Campus, Online"
+                                   required>
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        <div class="col-md-6">
+                            <label for="contact_info" class="form-label fw-semibold text-dark small text-uppercase tracking-wide">Contact Method *</label>
+                            <input type="text" class="form-control border-secondary border-opacity-25 shadow-none py-2" id="contact_info" name="contact_info" 
+                                   placeholder="e.g., WhatsApp: 0700123456"
+                                   required>
+                        </div>
                     </div>
                     
-                    <!-- Location -->
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Service Location *</label>
-                        <input type="text" class="form-control" id="location" name="location" 
-                               placeholder="e.g., Main Campus, Library, Hostel Zone A, Online"
-                               required>
-                        <div class="form-text">Where will you provide this service?</div>
-                    </div>
-                    
-                    <!-- Contact Information -->
-                    <div class="mb-3">
-                        <label for="contact_info" class="form-label">Contact Information *</label>
-                        <input type="text" class="form-control" id="contact_info" name="contact_info" 
-                               placeholder="e.g., Phone: 0700123456, WhatsApp, Telegram, Email"
-                               required>
-                        <div class="form-text">How should students contact you? (This will be visible to all users)</div>
-                    </div>
+                    <hr class="border-secondary border-opacity-10 mb-4">
                     
                     <!-- Submit Buttons -->
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Add Service</button>
+                    <div class="d-flex justify-content-end gap-3">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light fw-medium px-4 py-2 border">Cancel</a>
+                        <button type="submit" class="btn btn-primary shadow-sm fw-semibold px-4 py-2">Publish Service <i class="fas fa-paper-plane ms-2"></i></button>
                     </div>
                 </form>
             </div>
         </div>
         
         <!-- Tips Card -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h6 class="mb-0">💡 Tips for a Great Service Listing</h6>
-            </div>
-            <div class="card-body">
-                <ul class="mb-0">
-                    <li><strong>Be specific</strong> about what you offer</li>
-                    <li><strong>Set reasonable prices</strong> for student budgets</li>
-                    <li><strong>Include clear contact information</strong></li>
-                    <li><strong>Specify your availability</strong> and location</li>
-                    <li><strong>Respond promptly</strong> to service requests</li>
-                </ul>
+        <div class="modern-card border-0 bg-primary bg-opacity-10 shadow-sm p-4 text-primary mb-4 transition-all hover-lift">
+            <h6 class="fw-bold mb-3 d-flex align-items-center"><i class="fas fa-lightbulb me-2 fs-5"></i> Tips for a Great Listing</h6>
+            <div class="row g-3 small">
+                <div class="col-md-6"><i class="fas fa-check-circle me-1 opacity-75"></i> <strong>Be specific</strong> about what you provide</div>
+                <div class="col-md-6"><i class="fas fa-check-circle me-1 opacity-75"></i> <strong>Set reasonable prices</strong> for students</div>
+                <div class="col-md-6"><i class="fas fa-check-circle me-1 opacity-75"></i> <strong>Include clear</strong> contact options</div>
+                <div class="col-md-6"><i class="fas fa-check-circle me-1 opacity-75"></i> <strong>Specify</strong> availability and location</div>
             </div>
         </div>
     </div>

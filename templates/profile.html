@@ -1,136 +1,155 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
+<div class="row g-4 mt-2">
     <!-- Profile Sidebar -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body text-center">
+    <div class="col-lg-4 col-md-5 fade-up">
+        <div class="modern-card border-0 bg-white text-center shadow-sm position-relative overflow-hidden mb-4">
+            <!-- decorative background header -->
+            <div class="position-absolute top-0 start-0 w-100 bg-primary opacity-10" style="height: 120px; z-index: 0;"></div>
+            
+            <div class="p-4 position-relative z-index-1 mt-4">
                 <!-- Profile Picture -->
-                <div class="mb-3">
+                <div class="position-relative d-inline-block mb-3 mt-3">
                     {% if user.profile_picture %}
                     <img src="{{ url_for('static', filename='uploads/profile_pictures/' + user.profile_picture) }}" 
                          alt="{{ user.name }}" 
-                         class="rounded-circle" 
-                         style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #007bff;">
+                         class="rounded-circle shadow" 
+                         style="width: 140px; height: 140px; object-fit: cover; border: 4px solid white;">
                     {% else %}
-                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
-                         style="width: 150px; height: 150px; font-size: 3rem;">
+                    <div class="bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow border border-4 border-white" 
+                         style="width: 140px; height: 140px; font-size: 3.5rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark));">
                         {{ user.name[0]|upper }}
                     </div>
                     {% endif %}
                 </div>
                 
                 <!-- Profile Info -->
-                <h4>{{ user.name }}</h4>
-                <p class="text-muted">{{ user.email }}</p>
-                <p>
-                    <span class="badge bg-{{ 'success' if user.user_type == 'provider' else 'info' }}">
+                <h4 class="fw-bold text-dark mb-1">{{ user.name }}</h4>
+                <p class="text-muted mb-3">{{ user.email }}</p>
+                <div class="mb-3">
+                    <span class="badge bg-{{ 'success' if user.user_type == 'provider' else 'info' }} bg-opacity-10 text-{{ 'success' if user.user_type == 'provider' else 'info' }} px-3 py-1 rounded-pill border border-{{ 'success' if user.user_type == 'provider' else 'info' }} border-opacity-25 shadow-sm fw-bold">
                         {{ user.user_type|title }}
                     </span>
-                </p>
-                <p class="text-muted">
-                    <small>
-                        <i class="fas fa-calendar-alt"></i>
-                        Member since {{ user.registration_date.strftime('%B %Y') }}
-                    </small>
-                </p>
-                
-                <!-- Profile Picture Upload (Only for own profile) -->
-                {% if session.user_id == user.id %}
-                <div class="mt-4">
-                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPictureModal">
-                        <i class="fas fa-camera me-1"></i>Change Photo
-                    </button>
-                    {% if user.profile_picture %}
-                    <form method="POST" action="{{ url_for('remove_profile_picture') }}" class="d-inline">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                            <i class="fas fa-trash me-1"></i>Remove
-                        </button>
-                    </form>
-                    {% endif %}
                 </div>
+                <hr class="border-secondary border-opacity-10 my-4">
+                <div class="d-flex align-items-center justify-content-center text-muted small fw-medium">
+                    <i class="fas fa-calendar-alt me-2 text-primary opacity-75"></i> Member since {{ user.registration_date.strftime('%B %Y') }}
+                </div>
+            </div>
+            
+            <!-- Profile Picture Upload (Only for own profile) -->
+            {% if session.user_id == user.id %}
+            <div class="card-footer bg-light border-0 p-3 d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm fw-medium" data-bs-toggle="modal" data-bs-target="#uploadPictureModal">
+                    <i class="fas fa-camera me-1"></i> Edit Picture
+                </button>
+                {% if user.profile_picture %}
+                <form method="POST" action="{{ url_for('remove_profile_picture') }}" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger shadow-sm btn-sm px-3 fw-medium">
+                        <i class="fas fa-trash me-1"></i> Remove
+                    </button>
+                </form>
                 {% endif %}
-                
-                <!-- Rating Section -->
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Rating Widget -->
+        <div class="modern-card border-0 bg-white shadow-sm mb-4">
+            <div class="p-4 border-bottom border-light bg-light bg-opacity-50">
+                <h6 class="fw-bold text-dark mb-0 text-center">Community Rating</h6>
+            </div>
+            <div class="p-4 text-center">
                 {% if avg_rating > 0 %}
-                <div class="mt-4 p-3 bg-light rounded">
-                    <h5>Average Rating</h5>
-                    <div class="rating mb-2" style="font-size: 1.5rem;">
+                    <h2 class="display-4 fw-bold text-dark mb-0">{{ "%.1f"|format(avg_rating) }}</h2>
+                    <div class="rating my-2 text-warning fs-4 drop-shadow-sm">
                         {% for i in range(5) %}
                             {% if i < avg_rating %}
-                                ⭐
+                                <i class="fas fa-star"></i>
                             {% else %}
-                                ☆
+                                <i class="far fa-star"></i>
                             {% endif %}
                         {% endfor %}
                     </div>
-                    <small class="text-muted">
-                        {{ "%.1f"|format(avg_rating) }} out of 5 ({{ reviews|length }} review{{ 's' if reviews|length != 1 else '' }})
-                    </small>
-                </div>
-                {% elif user.user_type == 'provider' %}
-                <div class="mt-4 p-3 bg-light rounded">
-                    <h6>No Ratings Yet</h6>
-                    <small class="text-muted">Start offering services to get reviews!</small>
-                </div>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-medium">Based on {{ reviews|length }} review{{ 's' if reviews|length != 1 else '' }}</span>
+                {% else %}
+                    <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                        <i class="far fa-star text-muted fs-3"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">No Ratings Yet</h6>
+                    {% if user.user_type == 'provider' %}
+                    <p class="text-muted small mb-0">Complete services to earn community reviews.</p>
+                    {% else %}
+                    <p class="text-muted small mb-0">This user hasn't received any reviews.</p>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
         
         <!-- Contact Action -->
         {% if session.user_id and session.user_id != user.id %}
-        <div class="card mt-3">
-            <div class="card-body text-center">
-                <a href="{{ url_for('conversation', user_id=user.id) }}" class="btn btn-primary w-100 mb-2">
-                    <i class="fas fa-envelope me-1"></i> Send Message
+        <div class="modern-card border-0 bg-white shadow-sm p-4">
+            <div class="d-grid gap-3">
+                <a href="{{ url_for('conversation', user_id=user.id) }}" class="btn btn-primary py-2 shadow-sm fw-bold">
+                    <i class="fas fa-envelope me-2 opacity-75"></i> Send Message
                 </a>
-                <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
-                    <i class="fas fa-star me-1"></i> Write a Review
+                <button type="button" class="btn btn-outline-primary py-2 border-2 fw-bold" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
+                    <i class="fas fa-star me-2 opacity-75"></i> Write a Review
                 </button>
             </div>
         </div>
         {% endif %}
     </div>
     
-    <!-- Main Content -->
-    <div class="col-md-8">
+    <!-- Main Content Tab -->
+    <div class="col-lg-8 col-md-7 fade-up" style="animation-delay: 0.1s;">
         {% if user.user_type == 'provider' %}
         <!-- Provider Services -->
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Services Offered</h5>
-                <span class="badge bg-primary">{{ user.services|length }} service{{ 's' if user.services|length != 1 else '' }}</span>
+        <div class="modern-card border-0 bg-white shadow-sm mb-4">
+            <div class="p-4 border-bottom border-light d-flex justify-content-between align-items-center bg-light bg-opacity-50">
+                <h5 class="fw-bold text-dark mb-0">Services Offered</h5>
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill border border-primary border-opacity-25">{{ user.services|length }} Total</span>
             </div>
-            <div class="card-body">
+            <div class="p-4">
                 {% set user_services = user.services %}
                 {% if user_services %}
-                    <div class="row">
+                    <div class="row g-4">
                         {% for service in user_services %}
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h6 class="card-title">{{ service.title }}</h6>
-                                    <p class="card-text small text-muted">{{ service.description[:100] }}{% if service.description|length > 100 %}...{% endif %}</p>
-                                    <div class="mb-2">
-                                        <span class="badge bg-info">{{ service.category }}</span>
-                                        <span class="badge bg-success">{{ service.price }}</span>
+                        <div class="col-md-6">
+                            <div class="modern-card h-100 border border-light d-flex flex-column shadow-sm hover-lift">
+                                <div class="p-4 flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="fw-bold text-dark mb-0 text-truncate pe-2">{{ service.title }}</h6>
                                     </div>
-                                    <p class="card-text small">
-                                        <i class="fas fa-map-marker-alt"></i> {{ service.location }}
-                                    </p>
-                                    <p class="card-text small">
-                                        <i class="fas fa-phone"></i> {{ service.contact_info }}
-                                    </p>
+                                    <p class="small text-muted mb-3" style="line-height: 1.5;">{{ service.description[:80] }}{% if service.description|length > 80 %}...{% endif %}</p>
+                                    
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 fw-medium" style="font-size: 0.7rem;">{{ service.category }}</span>
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 fw-bold" style="font-size: 0.7rem;">{{ service.price }}</span>
+                                    </div>
+                                    
+                                    <div class="bg-light rounded p-2 mb-0 border border-secondary border-opacity-10">
+                                        <div class="small d-flex align-items-center text-muted mb-1 text-truncate">
+                                            <i class="fas fa-map-marker-alt text-primary opacity-75 w-15px center-text me-2"></i> {{ service.location }}
+                                        </div>
+                                        <div class="small d-flex align-items-center text-muted text-truncate">
+                                            <i class="fas fa-phone-alt text-success opacity-75 w-15px center-text me-2"></i> {{ service.contact_info }}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-footer bg-transparent">
-                                    <small class="text-muted">
-                                        Posted {{ service.created_date.strftime('%b %d, %Y') }}
+                                <div class="card-footer bg-transparent border-top border-light px-4 py-3 d-flex justify-content-between align-items-center">
+                                    <small class="text-muted" style="font-size: 0.75rem;">
+                                        Listed {{ service.created_date.strftime('%b %d, %Y') }}
                                     </small>
                                     {% if service.is_active %}
-                                    <span class="badge bg-success float-end">Active</span>
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-bold">
+                                        <div class="rounded-circle bg-success" style="width: 6px; height: 6px;"></div> Active
+                                    </div>
                                     {% else %}
-                                    <span class="badge bg-secondary float-end">Inactive</span>
+                                    <div class="d-flex align-items-center gap-1 text-secondary small fw-bold">
+                                        <div class="rounded-circle bg-secondary" style="width: 6px; height: 6px;"></div> Inactive
+                                    </div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -138,14 +157,14 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="text-center py-4">
-                        <div class="mb-3">
-                            <i class="fas fa-briefcase fa-3x text-muted"></i>
+                    <div class="text-center py-5">
+                        <div class="d-inline-flex justify-content-center align-items-center bg-light text-muted rounded-circle mb-3" style="width: 60px; height: 60px;">
+                            <i class="fas fa-box-open fs-3"></i>
                         </div>
-                        <h5>No services yet</h5>
-                        <p class="text-muted">This user hasn't added any services yet.</p>
+                        <h6 class="fw-bold text-dark mb-1">No services listed</h6>
+                        <p class="text-muted small mb-0">This user hasn't added any services yet.</p>
                         {% if session.user_id == user.id %}
-                        <a href="{{ url_for('add_service') }}" class="btn btn-primary">Add Your First Service</a>
+                        <a href="{{ url_for('add_service') }}" class="btn btn-primary btn-sm mt-3 px-4 fw-medium shadow-sm">Add First Service</a>
                         {% endif %}
                     </div>
                 {% endif %}
@@ -154,63 +173,61 @@
         {% endif %}
         
         <!-- Reviews Section -->
-        <div class="card mt-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    Reviews 
-                    {% if reviews %}<span class="badge bg-primary">{{ reviews|length }}</span>{% endif %}
-                </h5>
-            </div>
-            <div class="card-body">
+        <div class="modern-card border-0 bg-white shadow-sm mb-4">
+            <div class="p-4 border-bottom border-light bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-dark mb-0">Reviews</h5>
                 {% if reviews %}
+                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold border border-warning border-opacity-50 shadow-sm"><i class="fas fa-star text-warning"></i> {{ reviews|length }}</span>
+                {% endif %}
+            </div>
+            <div class="p-4">
+                {% if reviews %}
+                    <div class="d-flex flex-column gap-3">
                     {% for review in reviews %}
-                    <div class="border-bottom pb-3 mb-3">
-                        <div class="d-flex align-items-center mb-2">
-                            {% if review.reviewer.profile_picture %}
-                            <img src="{{ url_for('static', filename='uploads/profile_pictures/' + review.reviewer.profile_picture) }}" 
-                                 alt="{{ review.reviewer.name }}" 
-                                 class="rounded-circle me-2" 
-                                 style="width: 40px; height: 40px; object-fit: cover;">
-                            {% else %}
-                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
-                                 style="width: 40px; height: 40px; font-size: 0.9rem;">
-                                {{ review.reviewer.name[0]|upper }}
-                            </div>
-                            {% endif %}
-                            <div>
-                                <strong>{{ review.reviewer.name }}</strong>
-                                <div class="rating text-warning">
-                                    {% for i in range(5) %}
-                                        {% if i < review.rating %}
-                                            ⭐
-                                        {% else %}
-                                            ☆
-                                        {% endif %}
-                                    {% endfor %}
+                        <div class="p-3 bg-light rounded-4 border border-secondary border-opacity-10 position-relative">
+                            <div class="d-flex align-items-start mb-2">
+                                {% if review.reviewer.profile_picture %}
+                                <img src="{{ url_for('static', filename='uploads/profile_pictures/' + review.reviewer.profile_picture) }}" 
+                                     alt="{{ review.reviewer.name }}" 
+                                     class="rounded-circle me-3 border border-white shadow-sm" 
+                                     style="width: 48px; height: 48px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-secondary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold shadow-sm border border-white" 
+                                     style="width: 48px; height: 48px; font-size: 1.2rem;">
+                                    {{ review.reviewer.name[0]|upper }}
+                                </div>
+                                {% endif %}
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <strong class="fw-bold text-dark">{{ review.reviewer.name }}</strong>
+                                        <small class="text-muted opacity-75">{{ review.review_date.strftime('%b %d, %Y') }}</small>
+                                    </div>
+                                    <div class="rating text-warning mb-1" style="font-size: 0.85rem;">
+                                        {% for i in range(5) %}
+                                            {% if i < review.rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    {% if review.comment %}
+                                    <p class="mt-2 mb-0 text-dark" style="line-height: 1.5; font-size: 0.95rem;">"{{ review.comment }}"</p>
+                                    {% else %}
+                                    <p class="mt-2 mb-0 text-muted fst-italic small">No written comment provided.</p>
+                                    {% endif %}
                                 </div>
                             </div>
-                            <small class="text-muted ms-auto">{{ review.review_date.strftime('%B %d, %Y') }}</small>
                         </div>
-                        {% if review.comment %}
-                        <p class="mt-2 mb-0">{{ review.comment }}</p>
-                        {% else %}
-                        <p class="mt-2 mb-0 text-muted"><i>No comment provided</i></p>
-                        {% endif %}
-                    </div>
                     {% endfor %}
+                    </div>
                 {% else %}
-                    <div class="text-center py-4">
-                        <div class="mb-3">
-                            <i class="fas fa-comments fa-3x text-muted"></i>
+                    <div class="text-center py-5">
+                        <div class="d-inline-flex justify-content-center align-items-center bg-light text-muted rounded-circle mb-3" style="width: 60px; height: 60px;">
+                            <i class="far fa-comment-dots fs-3"></i>
                         </div>
-                        <h5>No reviews yet</h5>
-                        <p class="text-muted">
-                            {% if user.user_type == 'provider' %}
-                            This provider doesn't have any reviews yet.
-                            {% else %}
-                            This user doesn't have any reviews yet.
-                            {% endif %}
-                        </p>
+                        <h6 class="fw-bold text-dark mb-1">No reviews yet</h6>
+                        <p class="text-muted small mb-0">There are no community reviews for this profile.</p>
                     </div>
                 {% endif %}
             </div>
@@ -220,38 +237,34 @@
 
 <!-- Upload Picture Modal -->
 {% if session.user_id == user.id %}
-<div class="modal fade" id="uploadPictureModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Upload Profile Picture</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="uploadPictureModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <div class="modal-header bg-primary text-white border-0 p-4">
+                <h5 class="modal-title fw-bold mb-0">Update Profile Picture</h5>
+                <button type="button" class="btn-close btn-close-white opacity-75" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('upload_profile_picture') }}" enctype="multipart/form-data">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="profile_picture" class="form-label">Select Image</label>
-                        <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept=".png,.jpg,.jpeg,.gif" required>
-                        <div class="form-text">
-                            Supported formats: PNG, JPG, JPEG, GIF. Max file size: 2MB.
+                <div class="modal-body p-4 bg-light">
+                    <div class="bg-white p-4 rounded-3 shadow-sm border border-light text-center">
+                        <!-- IMAGE PREVIEW -->
+                        <div class="mb-4">
+                            <img id="imagePreview" class="rounded-circle shadow-sm border border-4 border-light object-fit-cover mx-auto" alt="Preview preview" style="width: 150px; height: 150px; display: none;">
+                            <div id="imagePlaceholder" class="rounded-circle bg-light border border-dashed border-secondary border-opacity-25 mx-auto d-flex justify-content-center align-items-center text-muted" style="width: 150px; height: 150px;">
+                                <i class="fas fa-image fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 text-start">
+                            <label for="profile_picture" class="form-label fw-semibold text-dark small">Select Image File</label>
+                            <input type="file" class="form-control border-secondary border-opacity-25 shadow-none" id="profile_picture" name="profile_picture" accept=".png,.jpg,.jpeg,.gif" required>
+                            <div class="form-text small py-1"><i class="fas fa-file-image me-1 text-primary"></i> JPG, PNG, GIF up to 2MB allowed.</div>
                         </div>
                     </div>
-                    
-                    <!-- IMAGE PREVIEW -->
-                    <div class="text-center">
-                        <img id="imagePreview" class="img-thumbnail" alt="Preview" style="max-width: 200px; display: none;">
-                    </div>
-                    
-                    <div class="alert alert-info">
-                        <small>
-                            <i class="fas fa-info-circle"></i>
-                            For best results, use a square image (1:1 ratio).
-                        </small>
-                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Upload Picture</button>
+                <div class="modal-footer border-top border-light bg-white p-3">
+                    <button type="button" class="btn btn-light fw-medium px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">Save Changes <i class="fas fa-save ms-1"></i></button>
                 </div>
             </form>
         </div>
@@ -261,34 +274,37 @@
 
 <!-- Write Review Modal -->
 {% if session.user_id and session.user_id != user.id %}
-<div class="modal fade" id="writeReviewModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Write a Review for {{ user.name }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="writeReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <div class="modal-header bg-primary text-white border-0 p-4">
+                <h5 class="modal-title fw-bold mb-0">Review {{ user.name }}</h5>
+                <button type="button" class="btn-close btn-close-white opacity-75" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('add_review', provider_id=user.id) }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="rating" class="form-label">Rating</label>
-                        <select class="form-select" id="rating" name="rating" required>
-                            <option value="" disabled selected>Select a rating...</option>
-                            <option value="5">⭐⭐⭐⭐⭐ (5/5) - Excellent</option>
-                            <option value="4">⭐⭐⭐⭐ (4/5) - Very Good</option>
-                            <option value="3">⭐⭐⭐ (3/5) - Good</option>
-                            <option value="2">⭐⭐ (2/5) - Fair</option>
-                            <option value="1">⭐ (1/5) - Poor</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="comment" class="form-label">Comment (Optional)</label>
-                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Share your experience..."></textarea>
+                <div class="modal-body p-4 bg-light">
+                    <div class="bg-white p-4 rounded-3 shadow-sm border border-light">
+                        <div class="mb-4">
+                            <label for="rating" class="form-label fw-semibold text-dark">Overall Rating</label>
+                            <select class="form-select border-secondary border-opacity-25 shadow-none py-2" id="rating" name="rating" required>
+                                <option value="" disabled selected>Select a rating...</option>
+                                <option value="5">⭐⭐⭐⭐⭐ (5) - Excellent</option>
+                                <option value="4">⭐⭐⭐⭐ (4) - Very Good</option>
+                                <option value="3">⭐⭐⭐ (3) - Good</option>
+                                <option value="2">⭐⭐ (2) - Fair</option>
+                                <option value="1">⭐ (1) - Poor</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label for="comment" class="form-label fw-semibold text-dark">Written Review (Optional)</label>
+                            <textarea class="form-control border-secondary border-opacity-25 shadow-none p-3" id="comment" name="comment" rows="4" placeholder="How was your experience working with this student?"></textarea>
+                            <div class="form-text mt-2 small text-muted"><i class="fas fa-comment-dots text-primary me-1"></i> Honest reviews help keep the platform trustworthy.</div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                <div class="modal-footer border-top border-light bg-white p-3">
+                    <button type="button" class="btn btn-light fw-medium px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">Publish Review <i class="fas fa-paper-plane ms-1"></i></button>
                 </div>
             </form>
         </div>
@@ -296,13 +312,18 @@
 </div>
 {% endif %}
 
+<style>
+    .border-dashed { border-style: dashed !important; }
+</style>
+
 <script>
 // Profile picture preview functionality
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('profile_picture');
     const imagePreview = document.getElementById('imagePreview');
+    const imagePlaceholder = document.getElementById('imagePlaceholder');
     
-    if (fileInput && imagePreview) {
+    if (fileInput && imagePreview && imagePlaceholder) {
         fileInput.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
@@ -311,12 +332,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.addEventListener('load', function() {
                     imagePreview.src = reader.result;
                     imagePreview.style.display = 'block';
+                    imagePlaceholder.style.display = 'none';
                 });
                 
                 reader.readAsDataURL(file);
             } else {
                 imagePreview.style.display = 'none';
                 imagePreview.src = '';
+                imagePlaceholder.style.display = 'flex';
             }
         });
     }
@@ -325,12 +348,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadModal = document.getElementById('uploadPictureModal');
     if (uploadModal) {
         uploadModal.addEventListener('hidden.bs.modal', function() {
-            const imagePreview = document.getElementById('imagePreview');
-            if (imagePreview) {
+            if (imagePreview && imagePlaceholder) {
                 imagePreview.style.display = 'none';
                 imagePreview.src = '';
+                imagePlaceholder.style.display = 'flex';
             }
-            const fileInput = document.getElementById('profile_picture');
             if (fileInput) {
                 fileInput.value = '';
             }
