@@ -1,89 +1,59 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row pt-3 fade-up">
+<div class="row">
     <div class="col-md-12">
-        <div class="modern-card border-0 bg-white shadow-sm h-100 d-flex flex-column overflow-hidden" style="max-height: 80vh;">
-            
-            <!-- Chat Header -->
-            <div class="p-3 p-md-4 border-bottom border-light bg-white d-flex justify-content-between align-items-center shadow-sm position-relative z-index-1">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
-                    <a href="{{ url_for('messages') }}" class="btn btn-light btn-sm rounded-circle me-3 d-flex d-md-none justify-content-center align-items-center" style="width: 32px; height: 32px;">
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
-                    
-                    <div class="position-relative me-3">
-                        {% if other_user.profile_picture %}
-                        <img src="{{ url_for('static', filename='uploads/profile_pictures/' + other_user.profile_picture) }}" 
-                             alt="{{ other_user.name }}" 
-                             class="rounded-circle shadow-sm border border-2 border-white object-fit-cover" 
-                             style="width: 48px; height: 48px;">
-                        {% else %}
-                        <div class="bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm border border-2 border-white fw-bold" 
-                             style="width: 48px; height: 48px; font-size: 1.1rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark));">
-                            {{ other_user.name[0]|upper }}
-                        </div>
-                        {% endif %}
-                        <div class="position-absolute bottom-0 end-0 bg-success border border-2 border-white rounded-circle" style="width: 12px; height: 12px;"></div>
+                    {% if other_user.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/profile_pictures/' + other_user.profile_picture) }}" 
+                         alt="{{ other_user.name }}" 
+                         class="rounded-circle me-3" 
+                         style="width: 40px; height: 40px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px;">
+                        {{ other_user.name[0]|upper }}
                     </div>
+                    {% endif %}
                     <div>
-                        <h6 class="mb-0 fw-bold text-dark">{{ other_user.name }}</h6>
-                        <a href="{{ url_for('profile', user_id=other_user.id) }}" class="text-decoration-none small text-primary hover-primary transition-all">View Profile</a>
+                        <h5 class="mb-0">{{ other_user.name }}</h5>
+                        <small class="text-muted">{{ other_user.email }}</small>
                     </div>
                 </div>
-                
-                <div class="d-none d-md-block">
-                    <a href="{{ url_for('messages') }}" class="btn btn-outline-secondary border-secondary border-opacity-25 btn-sm px-3 fw-medium rounded-pill shadow-sm mt-1">
-                        <i class="fas fa-inbox me-1 opacity-75"></i> All Messages
-                    </a>
-                </div>
+                <a href="{{ url_for('messages') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Messages
+                </a>
             </div>
             
-            <!-- Chat Body -->
-            <div class="card-body bg-light p-4 overflow-auto d-flex flex-column gap-3" id="messageContainer" style="height: 60vh; background-image: url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%234f46e5\' fill-opacity=\'0.03\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E');">
-                
-                <div class="text-center mb-4">
-                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-10 fw-normal rounded-pill px-3 py-1 small">Conversation started</span>
-                </div>
-                
+            <div class="card-body" style="height: 400px; overflow-y: auto;" id="messageContainer">
                 {% if messages %}
                     {% for message in messages %}
-                        {% set is_mine = message.sender_id == session.user_id %}
-                        <div class="d-flex {% if is_mine %}justify-content-end{% endif %} w-100 fade-up" style="animation-delay: {{ loop.index0 * 0.02 }}s;">
-                            <div class="d-flex flex-column {% if is_mine %}align-items-end{% else %}align-items-start{% endif %}" style="max-width: 85%; min-width: 15%;">
-                                
-                                <div class="px-3 py-2 shadow-sm {% if is_mine %}bg-primary text-white ms-auto{% else %}bg-white text-dark border border-secondary border-opacity-10 me-auto{% endif %}" 
-                                     style="border-radius: 1.2rem; {% if is_mine %}border-bottom-right-radius: 0.2rem;{% else %}border-bottom-left-radius: 0.2rem;{% endif %}; font-size: 0.95rem; line-height: 1.5;">
-                                    {{ message.content }}
-                                </div>
-                                <div class="small mt-1 px-1 opacity-50" style="font-size: 0.7rem;">
-                                    {{ message.timestamp.strftime('%I:%M %p') }}
-                                    {% if is_mine %}
-                                        <i class="fas fa-check-double ms-1 text-primary"></i>
-                                    {% endif %}
-                                </div>
+                    <div class="d-flex mb-3 {% if message.sender_id == session.user_id %}justify-content-end{% endif %}">
+                        <div class="{% if message.sender_id == session.user_id %}text-end{% endif %}" style="max-width: 70%;">
+                            <div class="d-flex align-items-center {% if message.sender_id == session.user_id %}justify-content-end{% endif %} mb-1">
+                                <small class="text-muted me-2">{{ message.sender.name }}</small>
+                                <small class="text-muted">{{ message.timestamp.strftime('%I:%M %p') }}</small>
+                            </div>
+                            <div class="p-3 rounded {% if message.sender_id == session.user_id %}bg-primary text-white{% else %}bg-light{% endif %}">
+                                {{ message.content }}
                             </div>
                         </div>
+                    </div>
                     {% endfor %}
                 {% else %}
-                    <div class="mt-auto mb-auto text-center w-100">
-                        <div class="bg-white shadow-sm rounded-4 p-4 d-inline-block border border-secondary border-opacity-10">
-                            <h6 class="fw-bold mb-1 text-dark">Say Hello! 👋</h6>
-                            <p class="text-muted small mb-0">You're starting a new conversation with {{ other_user.name }}.<br>Don't be shy, introduce yourself.</p>
-                        </div>
+                    <div class="text-center py-4">
+                        <p class="text-muted">No messages yet. Start the conversation!</p>
                     </div>
                 {% endif %}
             </div>
             
-            <!-- Chat Footer -->
-            <div class="p-3 bg-white border-top border-light position-relative z-index-1">
-                <form method="POST" class="d-flex align-items-center gap-2 m-0 bg-light p-2 rounded-pill border border-secondary border-opacity-10 focus-within-shadow transition-all">
-                    <button type="button" class="btn btn-light rounded-circle border-0 text-muted hover-primary transition-all d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
-                    <input type="text" name="content" class="form-control border-0 bg-transparent shadow-none px-2 py-2" placeholder="Write a message..." autocomplete="off" required style="font-size: 0.95rem;">
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold d-flex align-items-center gap-2">
-                        <span class="d-none d-sm-inline">Send</span> <i class="fas fa-paper-plane"></i>
+            <div class="card-footer">
+                <form method="POST" class="d-flex">
+                    <input type="text" name="content" class="form-control me-2" placeholder="Type your message..." required>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Send
                     </button>
                 </form>
             </div>
@@ -91,21 +61,11 @@
     </div>
 </div>
 
-<style>
-    .focus-within-shadow:focus-within {
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
-        border-color: rgba(79, 70, 229, 0.3) !important;
-        background-color: white !important;
-    }
-</style>
-
 <script>
 // Scroll to bottom of messages
 document.addEventListener('DOMContentLoaded', function() {
     const messageContainer = document.getElementById('messageContainer');
-    if(messageContainer) {
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-    }
+    messageContainer.scrollTop = messageContainer.scrollHeight;
 });
 </script>
 {% endblock %}

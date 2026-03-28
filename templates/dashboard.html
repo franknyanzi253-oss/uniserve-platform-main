@@ -1,139 +1,125 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Dashboard Header -->
-<div class="modern-card border-0 bg-white p-4 p-md-5 mb-4 shadow-sm fade-up position-relative overflow-hidden">
-    <div class="position-absolute top-0 end-0 h-100 w-50" style="background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.08), transparent 70%); z-index: 0;"></div>
-    <div class="row align-items-center position-relative z-index-1">
-        <div class="col-md-8 mb-3 mb-md-0">
-            <h2 class="fw-bold text-dark mb-2">Welcome back, {{ user.name }}! 👋</h2>
-            <div class="d-flex flex-wrap align-items-center gap-3 text-muted">
-                <span class="badge bg-{{ 'primary' if user.user_type == 'provider' else 'info' }} bg-opacity-10 text-{{ 'primary' if user.user_type == 'provider' else 'info' }} px-3 py-2 rounded-pill fw-semibold border border-{{ 'primary' if user.user_type == 'provider' else 'info' }} border-opacity-25">
-                    <i class="fas fa-{{ 'briefcase' if user.user_type == 'provider' else 'search' }} me-1"></i> {{ user.user_type|title }} Account
-                </span>
-                <small class="fw-medium"><i class="fas fa-calendar-alt me-1 opacity-75"></i> Member since {{ user.registration_date.strftime('%b %Y') }}</small>
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Welcome, {{ user.name }}!</h2>
+                <p class="lead mb-0">You are logged in as a <span class="badge bg-info">{{ user.user_type|title }}</span>.</p>
+                <small class="text-muted">Member since {{ user.registration_date.strftime('%B %d, %Y') }}</small>
             </div>
-        </div>
-        <div class="col-md-4 text-md-end">
-            {% if user.user_type == 'provider' %}
-            <a href="{{ url_for('add_service') }}" class="btn btn-primary shadow-sm px-4 py-2 fw-semibold">
-                <i class="fas fa-plus me-1"></i> Add New Service
-            </a>
-            {% else %}
-            <a href="{{ url_for('services') }}" class="btn btn-primary shadow-sm px-4 py-2 fw-semibold">
-                <i class="fas fa-search me-1"></i> Browse Services
-            </a>
-            {% endif %}
+            <div class="text-end">
+                {% if user.user_type == 'provider' %}
+                <a href="{{ url_for('add_service') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Service
+                </a>
+                {% else %}
+                <a href="{{ url_for('services') }}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Browse Services
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
 
 {% if user.user_type == 'provider' %}
 <!-- Provider Dashboard -->
-<div class="row g-4 mb-5 fade-up" style="animation-delay: 0.1s;">
-    <div class="col-lg-8">
-        <div class="modern-card h-100 border-0 bg-white shadow-sm">
-            <div class="p-4 border-bottom border-light d-flex justify-content-between align-items-center bg-light bg-opacity-50">
-                <h5 class="fw-bold text-dark mb-0">Your Active Services</h5>
-                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">{{ services|length }} Total</span>
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Your Services ({{ services|length }})</h5>
+                <a href="{{ url_for('add_service') }}" class="btn btn-sm btn-primary">Add Service</a>
             </div>
-            <div class="p-0">
+            <div class="card-body">
                 {% if services %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 border-light border-opacity-50">
-                        <thead class="table-light bg-opacity-50 small text-uppercase text-muted border-bottom border-light">
+                    <table class="table table-hover">
+                        <thead>
                             <tr>
-                                <th class="ps-4 fw-semibold border-0 py-3">Service Details</th>
-                                <th class="fw-semibold border-0 py-3">Price</th>
-                                <th class="fw-semibold border-0 py-3 text-center">Status</th>
-                                <th class="pe-4 fw-semibold border-0 py-3 text-end">Date Added</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Created</th>
                             </tr>
                         </thead>
-                        <tbody class="border-top-0">
+                        <tbody>
                             {% for service in services %}
                             <tr>
-                                <td class="ps-4 py-3">
-                                    <h6 class="fw-bold text-dark mb-1">{{ service.title }}</h6>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-medium rounded-pill px-2 py-1" style="font-size: 0.7rem;">{{ service.category }}</span>
+                                <td>
+                                    <strong>{{ service.title }}</strong>
+                                    <br><small class="text-muted">{{ service.description[:50] }}...</small>
                                 </td>
-                                <td class="py-3 fw-medium text-success">{{ service.price }}</td>
-                                <td class="py-3 text-center">
-                                    <span class="badge bg-{{ 'success' if service.is_active else 'secondary' }} bg-opacity-10 text-{{ 'success' if service.is_active else 'secondary' }} rounded-pill px-3 py-1 fw-bold">
-                                        <div class="d-flex align-items-center gap-1 justify-content-center">
-                                            <div class="rounded-circle bg-{{ 'success' if service.is_active else 'secondary' }}" style="width: 6px; height: 6px;"></div>
-                                            {{ 'Active' if service.is_active else 'Inactive' }}
-                                        </div>
+                                <td>
+                                    <span class="badge bg-info">{{ service.category }}</span>
+                                </td>
+                                <td>{{ service.price }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if service.is_active else 'secondary' }}">
+                                        {{ 'Active' if service.is_active else 'Inactive' }}
                                     </span>
                                 </td>
-                                <td class="pe-4 py-3 text-end text-muted small">{{ service.created_date.strftime('%b %d, %Y') }}</td>
+                                <td>{{ service.created_date.strftime('%Y-%m-%d') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-5">
-                    <div class="d-inline-flex justify-content-center align-items-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3 border border-primary border-opacity-10" style="width: 80px; height: 80px;">
-                        <i class="fas fa-box-open fs-2"></i>
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-briefcase fa-3x text-muted"></i>
                     </div>
-                    <h5 class="fw-bold text-dark mb-2">No services yet</h5>
-                    <p class="text-muted max-w-sm mx-auto mb-4">Start offering your skills to other UICT students today.</p>
-                    <a href="{{ url_for('add_service') }}" class="btn btn-primary px-4 fw-medium shadow-sm">Add Your First Service</a>
+                    <h5>No services yet</h5>
+                    <p class="text-muted">Start offering your skills to other students!</p>
+                    <a href="{{ url_for('add_service') }}" class="btn btn-primary">Add Your First Service</a>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <div class="col-lg-4">
-        <div class="row g-4">
-            <!-- Quick Stats -->
-            <div class="col-12">
-                <div class="modern-card border-0 bg-white shadow-sm">
-                    <div class="p-4 border-bottom border-light bg-light bg-opacity-50">
-                        <h6 class="fw-bold text-dark mb-0">Overview</h6>
-                    </div>
-                    <div class="p-4">
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="bg-primary bg-opacity-10 rounded-3 p-3 text-center h-100 border border-primary border-opacity-10 transition-all hover-lift">
-                                    <h3 class="fw-bold text-primary mb-0">{{ services|length }}</h3>
-                                    <span class="small text-muted fw-medium text-uppercase" style="letter-spacing: 0.5px;">Services</span>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="bg-success bg-opacity-10 rounded-3 p-3 text-center h-100 border border-success border-opacity-10 transition-all hover-lift">
-                                    <h3 class="fw-bold text-success mb-0">0</h3>
-                                    <span class="small text-muted fw-medium text-uppercase" style="letter-spacing: 0.5px;">Requests</span>
-                                </div>
-                            </div>
+    <div class="col-md-4">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ services|length }}</h4>
+                            <small class="text-muted">Services</small>
                         </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">0</h4>
+                        <small class="text-muted">Requests</small>
                     </div>
                 </div>
             </div>
-            
-            <!-- Quick Actions -->
-            <div class="col-12">
-                <div class="modern-card border-0 bg-white shadow-sm">
-                    <div class="p-4 border-bottom border-light bg-light bg-opacity-50">
-                        <h6 class="fw-bold text-dark mb-0">Quick Actions</h6>
-                    </div>
-                    <div class="p-4">
-                        <div class="d-flex flex-column gap-3">
-                            <a href="{{ url_for('add_service') }}" class="btn btn-primary d-flex justify-content-between align-items-center shadow-sm py-2">
-                                <span><i class="fas fa-plus me-2 opacity-75"></i> Add New Service</span>
-                                <i class="fas fa-chevron-right small opacity-50"></i>
-                            </a>
-                            <a href="{{ url_for('services') }}" class="btn btn-light border d-flex justify-content-between align-items-center fw-medium text-dark py-2">
-                                <span><i class="fas fa-search me-2 text-primary opacity-75"></i> Browse Services</span>
-                                <i class="fas fa-chevron-right small opacity-50"></i>
-                            </a>
-                            <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-light border d-flex justify-content-between align-items-center fw-medium text-dark py-2">
-                                <span><i class="fas fa-user-circle me-2 text-primary opacity-75"></i> View Your Profile</span>
-                                <i class="fas fa-chevron-right small opacity-50"></i>
-                            </a>
-                        </div>
-                    </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('add_service') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Service
+                    </a>
+                    <a href="{{ url_for('services') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> Browse All Services
+                    </a>
+                    <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-user"></i> View Your Profile
+                    </a>
                 </div>
             </div>
         </div>
@@ -142,116 +128,106 @@
 
 {% else %}
 <!-- Seeker Dashboard -->
-<div class="row g-4 mb-5 fade-up" style="animation-delay: 0.1s;">
-    <div class="col-lg-8">
-        <div class="modern-card h-100 border-0 bg-white shadow-sm">
-            <div class="p-4 border-bottom border-light d-flex justify-content-between align-items-center bg-light bg-opacity-50">
-                <h5 class="fw-bold text-dark mb-0">Your Service Requests</h5>
-                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">{{ requests|length }} Total</span>
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Your Service Requests ({{ requests|length }})</h5>
             </div>
-            <div class="p-0">
+            <div class="card-body">
                 {% if requests %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 border-light border-opacity-50">
-                        <thead class="table-light bg-opacity-50 small text-uppercase text-muted border-bottom border-light">
+                    <table class="table table-hover">
+                        <thead>
                             <tr>
-                                <th class="ps-4 fw-semibold border-0 py-3">Service Details</th>
-                                <th class="fw-semibold border-0 py-3">Provider</th>
-                                <th class="fw-semibold border-0 py-3 text-center">Status</th>
-                                <th class="pe-4 fw-semibold border-0 py-3 text-end">Date</th>
+                                <th>Service</th>
+                                <th>Provider</th>
+                                <th>Message</th>
+                                <th>Status</th>
+                                <th>Requested</th>
                             </tr>
                         </thead>
-                        <tbody class="border-top-0">
+                        <tbody>
                             {% for request in requests %}
                             <tr>
-                                <td class="ps-4 py-3">
-                                    <h6 class="fw-bold text-dark mb-1">{{ request.service.title }}</h6>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary fw-medium rounded-pill px-2 py-1" style="font-size: 0.7rem;">{{ request.service.category }}</span>
+                                <td>
+                                    <strong>{{ request.service.title }}</strong>
+                                    <br><small class="text-muted">{{ request.service.category }}</small>
                                 </td>
-                                <td class="py-3">
-                                    <a href="{{ url_for('profile', user_id=request.service.provider.id) }}" class="text-decoration-none fw-medium d-flex align-items-center text-dark text-primary-hover transition-all">
-                                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center me-2" style="width: 28px; height: 28px; font-size: 0.7rem fw-bold;">
-                                            {{ request.service.provider.name[:1] }}
-                                        </div>
+                                <td>
+                                    <a href="{{ url_for('profile', user_id=request.service.provider.id) }}">
                                         {{ request.service.provider.name }}
                                     </a>
                                 </td>
-                                <td class="py-3 text-center">
+                                <td>
+                                    <small>{{ request.message[:50] }}...</small>
+                                </td>
+                                <td>
                                     {% if request.status == 'pending' %}
-                                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1 rounded-pill fw-bold border border-warning border-opacity-25 shadow-sm">Pending</span>
+                                    <span class="badge bg-warning">Pending</span>
                                     {% elif request.status == 'accepted' %}
-                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill fw-bold border border-success border-opacity-25 shadow-sm">Accepted</span>
+                                    <span class="badge bg-success">Accepted</span>
                                     {% elif request.status == 'completed' %}
-                                    <span class="badge bg-info bg-opacity-10 text-info px-3 py-1 rounded-pill fw-bold border border-info border-opacity-25 shadow-sm">Completed</span>
+                                    <span class="badge bg-info">Completed</span>
                                     {% else %}
-                                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-1 rounded-pill fw-bold border border-secondary border-opacity-25 shadow-sm">{{ request.status|title }}</span>
+                                    <span class="badge bg-secondary">{{ request.status|title }}</span>
                                     {% endif %}
                                 </td>
-                                <td class="pe-4 py-3 text-end text-muted small">{{ request.request_date.strftime('%b %d, %Y') }}</td>
+                                <td>{{ request.request_date.strftime('%Y-%m-%d') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-5">
-                    <div class="d-inline-flex justify-content-center align-items-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3 border border-primary border-opacity-10" style="width: 80px; height: 80px;">
-                        <i class="fas fa-paper-plane fs-2"></i>
+                <div class="text-center py-4">
+                    <div class="mb-3">
+                        <i class="fas fa-inbox fa-3x text-muted"></i>
                     </div>
-                    <h5 class="fw-bold text-dark mb-2">No requests yet</h5>
-                    <p class="text-muted max-w-sm mx-auto mb-4">Start browsing the marketplace and request services you need.</p>
-                    <a href="{{ url_for('services') }}" class="btn btn-primary px-4 fw-medium shadow-sm">Browse Services</a>
+                    <h5>No service requests yet</h5>
+                    <p class="text-muted">Find services you need and send requests!</p>
+                    <a href="{{ url_for('services') }}" class="btn btn-primary">Browse Services</a>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
     
-    <div class="col-lg-4">
-        <div class="row g-4">
-            <!-- Quick Stats -->
-            <div class="col-12">
-                <div class="modern-card border-0 bg-white shadow-sm">
-                    <div class="p-4 border-bottom border-light bg-light bg-opacity-50">
-                        <h6 class="fw-bold text-dark mb-0">Your Activity</h6>
-                    </div>
-                    <div class="p-4">
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="bg-primary bg-opacity-10 rounded-3 p-3 text-center h-100 border border-primary border-opacity-10 transition-all hover-lift">
-                                    <h3 class="fw-bold text-primary mb-0">{{ requests|length }}</h3>
-                                    <span class="small text-muted fw-medium text-uppercase" style="letter-spacing: 0.5px;">Sent</span>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="bg-info bg-opacity-10 rounded-3 p-3 text-center h-100 border border-info border-opacity-10 transition-all hover-lift">
-                                    <h3 class="fw-bold text-info mb-0">0</h3>
-                                    <span class="small text-muted fw-medium text-uppercase" style="letter-spacing: 0.5px;">Completed</span>
-                                </div>
-                            </div>
+    <div class="col-md-4">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Your Activity</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ requests|length }}</h4>
+                            <small class="text-muted">Requests</small>
                         </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">0</h4>
+                        <small class="text-muted">Completed</small>
                     </div>
                 </div>
             </div>
-            
-            <!-- Quick Actions -->
-            <div class="col-12">
-                <div class="modern-card border-0 bg-white shadow-sm">
-                    <div class="p-4 border-bottom border-light bg-light bg-opacity-50">
-                        <h6 class="fw-bold text-dark mb-0">Quick Actions</h6>
-                    </div>
-                    <div class="p-4">
-                        <div class="d-flex flex-column gap-3">
-                            <a href="{{ url_for('services') }}" class="btn btn-primary d-flex justify-content-between align-items-center shadow-sm py-2">
-                                <span><i class="fas fa-search me-2 opacity-75"></i> Find Services</span>
-                                <i class="fas fa-chevron-right small opacity-50"></i>
-                            </a>
-                            <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-light border d-flex justify-content-between align-items-center fw-medium text-dark py-2">
-                                <span><i class="fas fa-user-circle me-2 text-primary opacity-75"></i> Your Profile</span>
-                                <i class="fas fa-chevron-right small opacity-50"></i>
-                            </a>
-                        </div>
-                    </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('services') }}" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Find Services
+                    </a>
+                    <a href="{{ url_for('profile', user_id=user.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user"></i> Your Profile
+                    </a>
                 </div>
             </div>
         </div>
