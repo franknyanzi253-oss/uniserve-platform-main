@@ -111,6 +111,34 @@
                         </button>
                     {% endif %}
                 </div>
+                {% elif session.get('is_admin') and user.user_type == 'provider' %}
+                <div class="mt-4 p-3 border rounded shadow-sm bg-light text-start border-warning">
+                    <h6 class="mb-2 fw-bold text-warning"><i class="fas fa-user-shield me-1"></i> Admin Controls</h6>
+                    <p class="small mb-2 fw-bold">ID Verification: <span class="badge bg-{{ 'success' if user.verification_status == 'verified' else 'warning' if user.verification_status == 'pending' else 'danger' if user.verification_status == 'rejected' else 'secondary' }}">{{ user.verification_status|title }}</span></p>
+                    
+                    {% if user.student_id_document %}
+                    <a href="{{ url_for('static', filename='uploads/documents/' + user.student_id_document) }}" target="_blank" class="btn btn-sm btn-info w-100 mb-3 text-white">
+                        <i class="fas fa-external-link-alt me-1"></i>View Uploaded ID
+                    </a>
+                    
+                    <div class="d-grid gap-2">
+                        <form action="{{ url_for('update_verification_status', user_id=user.id) }}" method="POST">
+                            <input type="hidden" name="status" value="verified">
+                            <button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('Approve verification?');">Approve ID</button>
+                        </form>
+                        <form action="{{ url_for('update_verification_status', user_id=user.id) }}" method="POST">
+                            <input type="hidden" name="status" value="rejected">
+                            <button type="submit" class="btn btn-sm btn-danger w-100" onclick="return confirm('Reject verification?');">Reject ID</button>
+                        </form>
+                        <form action="{{ url_for('update_verification_status', user_id=user.id) }}" method="POST">
+                            <input type="hidden" name="status" value="unverified">
+                            <button type="submit" class="btn btn-sm btn-secondary w-100" onclick="return confirm('Reset verification status?');">Reset Status</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <p class="small text-muted mb-0">User has not uploaded an ID document.</p>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
         </div>

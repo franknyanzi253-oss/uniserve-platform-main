@@ -39,7 +39,14 @@
                                     {{ u.name[:2].upper() }}
                                 </div>
                             {% endif %}
-                            <div class="fw-semibold">{{ u.name }}</div>
+                            <div class="fw-semibold">
+                                <a href="{{ url_for('profile', user_id=u.id) }}" class="text-decoration-none text-dark">{{ u.name }}</a>
+                                {% if u.user_type == 'provider' and u.verification_status == 'verified' %}
+                                <i class="fas fa-check-circle text-primary ms-1" title="Verified Provider"></i>
+                                {% elif u.user_type == 'provider' and u.verification_status == 'pending' %}
+                                <i class="fas fa-clock text-warning ms-1" title="Pending Verification"></i>
+                                {% endif %}
+                            </div>
                         </div>
                     </td>
                     <td><a href="mailto:{{ u.email }}" class="text-decoration-none text-body">{{ u.email }}</a></td>
@@ -55,6 +62,14 @@
                             <span class="badge bg-danger"><i class="fas fa-shield-alt me-1"></i>Admin</span>
                         {% else %}
                             <span class="badge bg-secondary">Standard</span>
+                        {% endif %}
+                        
+                        {% if u.user_type == 'provider' %}
+                        <div class="mt-1">
+                            <span class="badge border border-{{ 'success text-success' if u.verification_status == 'verified' else 'warning text-warning' if u.verification_status == 'pending' else 'danger text-danger' if u.verification_status == 'rejected' else 'secondary text-secondary' }} bg-transparent" style="font-size: 0.7rem;">
+                                {{ u.verification_status|title }}
+                            </span>
+                        </div>
                         {% endif %}
                     </td>
                     <td class="text-end pe-4">
