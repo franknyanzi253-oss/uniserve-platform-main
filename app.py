@@ -124,6 +124,31 @@ class Message(db.Model):
 # Ensure tables are created automatically on import (solves database initialization on Render)
 with app.app_context():
     db.create_all()
+    
+    # Auto-migrations for SQLite and PostgreSQL
+    try:
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;'))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        
+    try:
+        db.session.execute(text('ALTER TABLE "user" ADD COLUMN student_id_document VARCHAR(200);'))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        
+    try:
+        db.session.execute(text("ALTER TABLE \"user\" ADD COLUMN verification_status VARCHAR(20) DEFAULT 'unverified';"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        
+    try:
+        db.session.execute(text("UPDATE \"user\" SET verification_status = 'unverified' WHERE verification_status IS NULL;"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 def admin_required(f):
     @wraps(f)
@@ -797,30 +822,7 @@ def delete_user(user_id):
 def init_db():
     with app.app_context():
         db.create_all()
-        try:
-            db.session.execute(text('ALTER TABLE user ADD COLUMN is_admin BOOLEAN DEFAULT 0;'))
-            db.session.commit()
-        except:
-            db.session.rollback()
-            
-        try:
-            db.session.execute(text("ALTER TABLE user ADD COLUMN student_id_document VARCHAR(200);"))
-            db.session.commit()
-        except:
-            db.session.rollback()
-            
-        try:
-            db.session.execute(text("ALTER TABLE user ADD COLUMN verification_status VARCHAR(20) DEFAULT 'unverified';"))
-            db.session.commit()
-        except:
-            db.session.rollback()
-            
-        try:
-            db.session.execute(text("UPDATE user SET verification_status = 'unverified' WHERE verification_status IS NULL;"))
-            db.session.commit()
-        except:
-            db.session.rollback()
-            
+        # Migrations are now handled on app import (lines 115-139)
         print("[SUCCESS] Database initialized successfully!")
         print("[SUCCESS] All tables created and migrations applied")
 
