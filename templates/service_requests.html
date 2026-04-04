@@ -4,112 +4,167 @@
 <div class="row">
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="fas fa-inbox me-2"></i>{{ 'Service Requests' if user_type == 'provider' else 'Your Requests' }}</h2>
-            <span class="badge bg-primary">{{ requests|length }} request{{ 's' if requests|length != 1 else '' }}</span>
+            <h2><i class="fas fa-inbox me-2"></i>Service Requests</h2>
         </div>
     </div>
 </div>
 
-{% if requests %}
-<div class="row">
-    {% for request in requests %}
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">{{ request.service.title }}</h6>
-                <span class="badge bg-{{ 'warning' if request.status == 'pending' else 'success' if request.status == 'accepted' else 'info' if request.status == 'completed' else 'secondary' }}">
-                    {{ request.status|title }}
-                </span>
-            </div>
-            <div class="card-body">
-                {% if user_type == 'provider' %}
-                <p class="card-text"><strong>From:</strong> 
-                    <a href="{{ url_for('profile', user_id=request.seeker.id) }}">{{ request.seeker.name }}</a>
-                </p>
-                {% else %}
-                <p class="card-text"><strong>To Provider:</strong> 
-                    <a href="{{ url_for('profile', user_id=request.service.provider.id) }}">{{ request.service.provider.name }}</a>
-                </p>
-                {% endif %}
-                <p class="card-text"><strong>Message:</strong> {{ request.message }}</p>
-                <p class="card-text"><strong>Requested:</strong> {{ request.request_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
-                
-                <div class="mb-3">
-                    <strong>Contact Information:</strong>
-                    {% if user_type == 'provider' %}
-                    <p class="mb-1">{{ request.seeker.email }}</p>
-                    {% else %}
-                    <p class="mb-1">{{ request.service.provider.email }}</p>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="card-footer">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        {% if user_type == 'provider' %}
-                            {% if request.status == 'pending' %}
-                            <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
-                                <button type="submit" name="status" value="accepted" class="btn btn-success btn-sm">
-                                    <i class="fas fa-check me-1"></i>Accept
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
-                                <button type="submit" name="status" value="cancelled" class="btn btn-secondary btn-sm">
-                                    <i class="fas fa-times me-1"></i>Decline
-                                </button>
-                            </form>
-                            {% elif request.status == 'accepted' %}
-                            <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
-                                <button type="submit" name="status" value="completed" class="btn btn-info btn-sm">
-                                    <i class="fas fa-check-double me-1"></i>Mark Complete
-                                </button>
-                            </form>
-                            {% endif %}
-                        {% else %}
-                            {% if request.status == 'pending' %}
-                            <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
-                                <button type="submit" name="status" value="cancelled" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this request?');">
-                                    <i class="fas fa-times me-1"></i>Cancel Request
-                                </button>
-                            </form>
-                            {% endif %}
-                            {% if request.status == 'completed' %}
-                            <a href="{{ url_for('profile', user_id=request.service.provider.id) }}#reviews" class="btn btn-warning btn-sm">
-                                <i class="fas fa-star me-1"></i>Leave Review
-                            </a>
-                            {% endif %}
-                        {% endif %}
+<ul class="nav nav-tabs mb-4" id="requestTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent-tab-pane" type="button" role="tab" aria-selected="true">
+            Requests You Sent <span class="badge bg-secondary ms-1">{{ sent_requests|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="received-tab" data-bs-toggle="tab" data-bs-target="#received-tab-pane" type="button" role="tab" aria-selected="false">
+            Requests You Received <span class="badge bg-secondary ms-1">{{ received_requests|length }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="requestTabsContent">
+    <!-- SENT REQUESTS TAB -->
+    <div class="tab-pane fade show active" id="sent-tab-pane" role="tabpanel" tabindex="0">
+        {% if sent_requests %}
+        <div class="row">
+            {% for request in sent_requests %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">{{ request.service.title }}</h6>
+                        <span class="badge bg-{{ 'warning' if request.status == 'pending' else 'success' if request.status == 'accepted' else 'info' if request.status == 'completed' else 'secondary' }}">
+                            {{ request.status|title }}
+                        </span>
                     </div>
-                    
-                    {% if request.status in ['accepted', 'completed'] or session.get('is_admin') %}
-                    <a href="{{ url_for('conversation', user_id=(request.seeker.id if user_type == 'provider' else request.service.provider.id)) }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-comment me-1"></i>Message
-                    </a>
-                    {% else %}
-                    <button class="btn btn-outline-secondary btn-sm" disabled title="Request must be accepted first.">
-                        <i class="fas fa-comment me-1"></i>Message
-                    </button>
-                    {% endif %}
+                    <div class="card-body">
+                        <p class="card-text"><strong>To Provider:</strong> 
+                            <a href="{{ url_for('profile', user_id=request.service.provider.id) }}">{{ request.service.provider.name }}</a>
+                        </p>
+                        <p class="card-text"><strong>Message:</strong> {{ request.message }}</p>
+                        <p class="card-text"><strong>Requested:</strong> {{ request.request_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        
+                        <div class="mb-3">
+                            <strong>Contact Information:</strong>
+                            <p class="mb-1">{{ request.service.provider.email }}</p>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if request.status == 'pending' %}
+                                <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
+                                    <button type="submit" name="status" value="cancelled" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this request?');">
+                                        <i class="fas fa-times me-1"></i>Cancel Request
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if request.status == 'completed' %}
+                                <a href="{{ url_for('profile', user_id=request.service.provider.id) }}#reviews" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-star me-1"></i>Leave Review
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            {% if request.status in ['accepted', 'completed'] or session.get('is_admin') %}
+                            <a href="{{ url_for('conversation', user_id=request.service.provider.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-comment me-1"></i>Message
+                            </a>
+                            {% else %}
+                            <button class="btn btn-outline-secondary btn-sm" disabled title="Request must be accepted first.">
+                                <i class="fas fa-comment me-1"></i>Message
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-paper-plane fa-3x text-muted mb-3"></i>
+                <h5>No sent requests yet</h5>
+                <p class="text-muted">When you request services from others, they'll track here.</p>
+                <a href="{{ url_for('services') }}" class="btn btn-primary">Browse Services</a>
             </div>
         </div>
+        {% endif %}
     </div>
-    {% endfor %}
-</div>
-{% else %}
-<div class="card">
-    <div class="card-body text-center py-5">
-        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-        <h5>No service requests yet</h5>
-        <p class="text-muted">
-            {% if user_type == 'provider' %}
-            When students request your services, they'll appear here.
-            {% else %}
-            When you request services from providers, they'll appear here.
-            {% endif %}
-        </p>
-        <a href="{{ url_for('services') }}" class="btn btn-primary">Browse Services</a>
+
+    <!-- RECEIVED REQUESTS TAB -->
+    <div class="tab-pane fade" id="received-tab-pane" role="tabpanel" tabindex="0">
+        {% if received_requests %}
+        <div class="row">
+            {% for request in received_requests %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">{{ request.service.title }}</h6>
+                        <span class="badge bg-{{ 'warning' if request.status == 'pending' else 'success' if request.status == 'accepted' else 'info' if request.status == 'completed' else 'secondary' }}">
+                            {{ request.status|title }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><strong>From:</strong> 
+                            <a href="{{ url_for('profile', user_id=request.seeker.id) }}">{{ request.seeker.name }}</a>
+                        </p>
+                        <p class="card-text"><strong>Message:</strong> {{ request.message }}</p>
+                        <p class="card-text"><strong>Requested:</strong> {{ request.request_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        
+                        <div class="mb-3">
+                            <strong>Contact Information:</strong>
+                            <p class="mb-1">{{ request.seeker.email }}</p>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                {% if request.status == 'pending' %}
+                                <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
+                                    <button type="submit" name="status" value="accepted" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check me-1"></i>Accept
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
+                                    <button type="submit" name="status" value="cancelled" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-times me-1"></i>Decline
+                                    </button>
+                                </form>
+                                {% elif request.status == 'accepted' %}
+                                <form method="POST" action="{{ url_for('update_request_status', request_id=request.id) }}" class="d-inline">
+                                    <button type="submit" name="status" value="completed" class="btn btn-info btn-sm">
+                                        <i class="fas fa-check-double me-1"></i>Mark Complete
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            
+                            {% if request.status in ['accepted', 'completed'] or session.get('is_admin') %}
+                            <a href="{{ url_for('conversation', user_id=request.seeker.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-comment me-1"></i>Message
+                            </a>
+                            {% else %}
+                            <button class="btn btn-outline-secondary btn-sm" disabled title="Request must be accepted first.">
+                                <i class="fas fa-comment me-1"></i>Message
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5>No received requests yet</h5>
+                <p class="text-muted">When students request your services, they'll appear here.</p>
+                <a href="{{ url_for('add_service') }}" class="btn btn-primary">Add More Services</a>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endif %}
 {% endblock %}

@@ -72,13 +72,15 @@
                                class="btn btn-sm btn-outline-primary">
                                 View Provider
                             </a>
-                            {% if session.user_id and session.user_type == 'seeker' %}
+                            {% if session.user_id %}
+                                {% if service.provider.id != session.user_id %}
                                 <button type="button" class="btn btn-sm btn-primary" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#requestModal{{ service.id }}">
                                     Request Service
                                 </button>
-                            {% elif not session.user_id %}
+                                {% endif %}
+                            {% else %}
                                 <a href="{{ url_for('login') }}" class="btn btn-sm btn-primary">
                                     Login to Request
                                 </a>
@@ -101,8 +103,10 @@
 </div>
 
 <!-- Request Service Modals -->
-{% if session.user_id and session.user_type == 'seeker' %}
+<!-- Request Service Modals -->
+{% if session.user_id %}
     {% for service in services %}
+    {% if service.provider.id != session.user_id %}
     <div class="modal fade" id="requestModal{{ service.id }}" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -141,6 +145,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     {% endfor %}
 {% endif %}
 {% endblock %}

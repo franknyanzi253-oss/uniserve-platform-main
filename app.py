@@ -299,12 +299,17 @@ def add_service():
 
 @app.route('/request_service', methods=['POST'])
 def request_service():
-    if 'user_id' not in session or session['user_type'] != 'seeker':
-        flash('Please login as a service seeker to request services.', 'danger')
+    if 'user_id' not in session:
+        flash('Please login to request services.', 'danger')
         return redirect(url_for('login'))
     
     service_id = request.form['service_id']
     message = request.form['message']
+    
+    service = Service.query.get(service_id)
+    if service and service.provider_id == session['user_id']:
+        flash('You cannot request your own service.', 'warning')
+        return redirect(url_for('dashboard'))
     
     new_request = ServiceRequest(
         service_id=service_id,
@@ -568,16 +573,16 @@ def service_requests():
         return redirect(url_for('login'))
     
     user_id = session['user_id']
-    user_type = session.get('user_type', 'seeker')
     
-    if user_type == 'provider':
-        services = Service.query.filter_by(provider_id=user_id).all()
-        service_ids = [service.id for service in services]
-        requests = ServiceRequest.query.filter(ServiceRequest.service_id.in_(service_ids)).order_by(ServiceRequest.request_date.desc()).all()
-    else:
-        requests = ServiceRequest.query.filter_by(seeker_id=user_id).order_by(ServiceRequest.request_date.desc()).all()
+    # Sent Requests (Requests they made to others)
+    sent_requests = ServiceRequest.query.filter_by(seeker_id=user_id).order_by(ServiceRequest.request_date.desc()).all()
     
-    return render_template('service_requests.html', requests=requests, user_type=user_type)
+    # Received Requests (Requests made to their services)
+    services = Service.query.filter_by(provider_id=user_id).all()
+    service_ids = [service.id for service in services]
+    received_requests = ServiceRequest.query.filter(ServiceRequest.service_id.in_(service_ids)).order_by(ServiceRequest.request_date.desc()).all()
+    
+    return render_template('service_requests.html', sent_requests=sent_requests, received_requests=received_requests)
 
 @app.route('/update_request_status/<int:request_id>', methods=['POST'])
 def update_request_status(request_id):
