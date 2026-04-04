@@ -5,7 +5,12 @@
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h2>Welcome, {{ user.name }}!</h2>
+                <h2>
+                    Welcome, {{ user.name }}!
+                    {% if user.user_type == 'provider' and user.verification_status == 'verified' %}
+                    <i class="fas fa-check-circle text-primary fs-4 ms-1" title="Verified Provider"></i>
+                    {% endif %}
+                </h2>
                 <p class="lead mb-0">You are logged in as a <span class="badge bg-info">{{ user.user_type|title }}</span>.</p>
                 <small class="text-muted">Member since {{ user.registration_date.strftime('%B %d, %Y') }}</small>
             </div>
@@ -44,6 +49,7 @@
                                 <th>Price</th>
                                 <th>Status</th>
                                 <th>Created</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -63,6 +69,16 @@
                                     </span>
                                 </td>
                                 <td>{{ service.created_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <a href="{{ url_for('edit_service', service_id=service.id) }}" class="btn btn-sm btn-outline-secondary" title="Edit Service">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ url_for('delete_service', service_id=service.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this service permanently?');" title="Delete Service">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -131,8 +147,9 @@
 <div class="row mt-4">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Your Service Requests ({{ requests|length }})</h5>
+                <a href="{{ url_for('service_requests') }}" class="btn btn-sm btn-outline-primary">Manage Requests</a>
             </div>
             <div class="card-body">
                 {% if requests %}
@@ -155,8 +172,11 @@
                                     <br><small class="text-muted">{{ request.service.category }}</small>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('profile', user_id=request.service.provider.id) }}">
+                                    <a href="{{ url_for('profile', user_id=request.service.provider.id) }}" class="text-decoration-none">
                                         {{ request.service.provider.name }}
+                                        {% if request.service.provider.verification_status == 'verified' %}
+                                        <i class="fas fa-check-circle text-primary ms-1" title="Verified Provider"></i>
+                                        {% endif %}
                                     </a>
                                 </td>
                                 <td>

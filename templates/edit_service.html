@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0 text-primary"><i class="fas fa-edit me-2"></i>Edit Service</h4>
+                <div class="form-check form-switch m-0 d-flex align-items-center">
+                    <input class="form-check-input mt-0 me-2" type="checkbox" id="is_active" name="is_active" form="editServiceForm" {% if service.is_active %}checked{% endif %}>
+                    <label class="form-check-label mb-0" for="is_active">Activate Service</label>
+                </div>
+            </div>
+            <div class="card-body text-start">
+                <form method="POST" id="editServiceForm">
+                    <!-- Service Title -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label fw-semibold">Service Title *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ service.title }}" required>
+                    </div>
+                    
+                    <!-- Service Description -->
+                    <div class="mb-3">
+                        <label for="description" class="form-label fw-semibold">Service Description *</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4" required>{{ service.description }}</textarea>
+                    </div>
+                    
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label for="category" class="form-label fw-semibold">Category *</label>
+                        <select class="form-select" id="category" name="category" required>
+                            {% for category in categories %}
+                            <option value="{{ category }}" {% if service.category == category %}selected{% endif %}>{{ category }}</option>
+                            {% endfor %}
+                            <option value="Tutoring" {% if service.category == 'Tutoring' %}selected{% endif %}>🎓 Tutoring & Academic Help</option>
+                            <option value="Graphic Design" {% if service.category == 'Graphic Design' %}selected{% endif %}>🎨 Graphic Design</option>
+                            <option value="Computer Repair" {% if service.category == 'Computer Repair' %}selected{% endif %}>💻 Computer Repair & IT Support</option>
+                            <option value="Writing" {% if service.category == 'Writing' %}selected{% endif %}>✍️ Writing & Editing</option>
+                            <option value="Photography" {% if service.category == 'Photography' %}selected{% endif %}>📸 Photography</option>
+                            <option value="Other" {% if service.category == 'Other' %}selected{% endif %}>🔧 Other Services</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Price -->
+                        <div class="col-md-6 mb-3">
+                            <label for="price" class="form-label fw-semibold">Pricing *</label>
+                            <input type="text" class="form-control" id="price" name="price" 
+                                   value="{{ service.price }}" required>
+                        </div>
+                        
+                        <!-- Location -->
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label fw-semibold">Service Location *</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   value="{{ service.location }}" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <label for="contact_info" class="form-label fw-semibold">Contact Information *</label>
+                        <input type="text" class="form-control" id="contact_info" name="contact_info" 
+                               value="{{ service.contact_info }}" required>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

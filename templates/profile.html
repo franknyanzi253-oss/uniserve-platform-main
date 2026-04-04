@@ -22,7 +22,12 @@
                 </div>
                 
                 <!-- Profile Info -->
-                <h4>{{ user.name }}</h4>
+                <h4>
+                    {{ user.name }}
+                    {% if user.user_type == 'provider' and user.verification_status == 'verified' %}
+                    <i class="fas fa-check-circle text-primary ms-1" title="Verified Provider"></i>
+                    {% endif %}
+                </h4>
                 <p class="text-muted">{{ user.email }}</p>
                 <p>
                     <span class="badge bg-{{ 'success' if user.user_type == 'provider' else 'info' }}">
@@ -36,16 +41,22 @@
                     </small>
                 </p>
                 
-                <!-- Profile Picture Upload (Only for own profile) -->
+                <!-- Profile Controls (Only for own profile) -->
                 {% if session.user_id == user.id %}
-                <div class="mt-4">
+                <div class="mt-4 d-grid gap-2">
                     <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPictureModal">
                         <i class="fas fa-camera me-1"></i>Change Photo
                     </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fas fa-edit me-1"></i>Edit Profile
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteProfileModal">
+                        <i class="fas fa-user-minus me-1"></i>Delete Account
+                    </button>
                     {% if user.profile_picture %}
-                    <form method="POST" action="{{ url_for('remove_profile_picture') }}" class="d-inline">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                            <i class="fas fa-trash me-1"></i>Remove
+                    <form method="POST" action="{{ url_for('remove_profile_picture') }}" class="mt-2">
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                            <i class="fas fa-trash me-1"></i>Remove Photo
                         </button>
                     </form>
                     {% endif %}
@@ -75,6 +86,32 @@
                     <small class="text-muted">Start offering services to get reviews!</small>
                 </div>
                 {% endif %}
+                
+                <!-- Verification Status (Only for provider own profile) -->
+                {% if session.user_id == user.id and user.user_type == 'provider' %}
+                <div class="mt-4 p-3 border rounded shadow-sm bg-white text-start">
+                    <h6 class="mb-2 fw-bold"><i class="fas fa-shield-alt text-primary me-1"></i> Get Verified</h6>
+                    {% if user.verification_status == 'verified' %}
+                        <div class="alert alert-success p-2 mb-0 mt-2 text-center d-flex align-items-center justify-content-center">
+                            <i class="fas fa-check-circle me-2"></i> Verified Provider
+                        </div>
+                    {% elif user.verification_status == 'pending' %}
+                        <div class="alert alert-warning p-2 mb-0 mt-2 text-center text-dark">
+                            <i class="fas fa-clock me-2"></i> Verification Review Pending
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-2">Upload your student ID to get a verification badge and build trust.</p>
+                        {% if user.verification_status == 'rejected' %}
+                        <div class="alert alert-danger p-2 mb-2 text-center small">
+                            <i class="fas fa-exclamation-circle me-1"></i> Verification Rejected. Please upload a clearer valid ID.
+                        </div>
+                        {% endif %}
+                        <button type="button" class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#uploadIdModal">
+                            <i class="fas fa-id-card me-1"></i> Upload Student ID
+                        </button>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
         </div>
         
@@ -82,9 +119,15 @@
         {% if session.user_id and session.user_id != user.id %}
         <div class="card mt-3">
             <div class="card-body text-center">
+                {% if can_message %}
                 <a href="{{ url_for('conversation', user_id=user.id) }}" class="btn btn-primary w-100 mb-2">
                     <i class="fas fa-envelope me-1"></i> Send Message
                 </a>
+                {% else %}
+                <button class="btn btn-secondary w-100 mb-2" disabled title="You must have an accepted service request to message.">
+                    <i class="fas fa-envelope me-1"></i> Send Message
+                </button>
+                {% endif %}
                 <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
                     <i class="fas fa-star me-1"></i> Write a Review
                 </button>
@@ -147,6 +190,42 @@
                         {% if session.user_id == user.id %}
                         <a href="{{ url_for('add_service') }}" class="btn btn-primary">Add Your First Service</a>
                         {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% elif user.user_type == 'seeker' %}
+        <!-- Seeker Requests Display -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Services Requested</h5>
+                <span class="badge bg-primary">{{ seeker_requests|length }} request{{ 's' if seeker_requests|length != 1 else '' }}</span>
+            </div>
+            <div class="card-body">
+                {% if seeker_requests %}
+                    <div class="list-group">
+                        {% for req in seeker_requests[:5] %}
+                        <div class="list-group-item list-group-item-action flex-column align-items-start">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ req.service.title }}</h6>
+                                <small class="text-muted">{{ req.request_date.strftime('%b %d, %Y') }}</small>
+                            </div>
+                            <p class="mb-1 small text-muted">To: <a href="{{ url_for('profile', user_id=req.service.provider.id) }}" class="text-decoration-none">{{ req.service.provider.name }}</a></p>
+                            <span class="badge bg-{{ 'warning' if req.status == 'pending' else 'success' if req.status == 'accepted' else 'info' if req.status == 'completed' else 'secondary' }}">
+                                {{ req.status|title }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if seeker_requests|length > 5 and session.user_id == user.id %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('service_requests') }}" class="btn btn-sm btn-outline-primary">View All Requests</a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p>No service requests made yet.</p>
                     </div>
                 {% endif %}
             </div>
@@ -253,6 +332,39 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Upload Picture</button>
                 </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Upload ID Modal -->
+{% if session.user_id == user.id and user.user_type == 'provider' %}
+<div class="modal fade" id="uploadIdModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Verification ID</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('upload_verification_id') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle me-1"></i> Please upload a clear picture or PDF of your university student ID. This will only be used for verification purposes by administrators and will not be displayed publicly.
+                    </div>
+                    <div class="mb-3">
+                        <label for="verification_document" class="form-label fw-bold">Select Document</label>
+                        <input type="file" class="form-control" id="verification_document" name="verification_document" accept=".png,.jpg,.jpeg,.pdf" required>
+                        <div class="form-text">
+                            Supported formats: PDF, PNG, JPG, JPEG. Max file size: 2MB.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit for Review</button>
+                </div>
             </form>
         </div>
     </div>
@@ -291,6 +403,62 @@
                     <button type="submit" class="btn btn-primary">Submit Review</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Edit Profile Modal -->
+{% if session.user_id == user.id %}
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('edit_profile') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">New Password (leave blank to keep current)</label>
+                        <input type="password" class="form-control" id="password" name="password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Profile Modal -->
+<div class="modal fade" id="deleteProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Delete Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger fw-bold">Warning: This action cannot be undone.</p>
+                <p>Are you absolutely sure you want to permanently delete your account? All your services, requests, and reviews will be instantly deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('delete_profile') }}">
+                    <button type="submit" class="btn btn-danger">Yes, Delete My Account</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

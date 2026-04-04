@@ -4,7 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniServe - Campus Service Platform</title>
+    <title>UniServe - Campus Services Platform</title>
+    
+    <!-- PWA Setup -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#0d6efd">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icons/handshake-icon.svg') }}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,9 +26,103 @@
 
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    <!-- Modern Page Loader CSS -->
+    <style>
+        #page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+        }
+        .loader-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(13, 110, 253, 0.15);
+            border-top-color: #0d6efd;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        .loader-text {
+            color: #0d6efd;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        /* Floating Flash Alerts */
+        .flash-alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1060;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            pointer-events: none;
+        }
+        .flash-alert {
+            pointer-events: auto;
+            animation: slideInRight 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: none;
+            border-radius: 12px;
+            opacity: 1;
+            transition: all 0.4s cubic-bezier(0.6, -0.28, 0.735, 0.045); /* Dramatic pull out */
+            display: flex;
+            align-items: center;
+        }
+        .flash-alert.fade-out {
+            transform: translateX(120%);
+            opacity: 0;
+            margin-top: -70px; /* Collapse space nicely */
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .flash-alert .btn-close {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+        }
+    </style>
 </head>
 
-<body>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Fullscreen Page Loader -->
+    <div id="page-loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">UniServe Loading...</div>
+    </div>
+
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
@@ -51,13 +150,18 @@
                             <i class="fas fa-comments me-1"></i>Messages
                         </a>
                     </li>
-                    {% if session.user_type == 'provider' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('service_requests') }}">
                             <i class="fas fa-inbox me-1"></i>Requests
                         </a>
                     </li>
                     {% endif %}
+                    {% if session.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-shield-alt me-1 text-warning"></i>Admin Panel
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
@@ -89,24 +193,38 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <div class="container mt-4">
+    <!-- Flash Notifications Container -->
+    <div class="flash-alert-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
+        <div class="alert alert-{{ category }} flash-alert alert-dismissible pe-5" role="alert">
+            <div class="d-flex align-items-center">
+                {% if category == 'success' %}
+                <i class="fas fa-check-circle fs-4 me-3"></i>
+                {% elif category == 'danger' %}
+                <i class="fas fa-exclamation-circle fs-4 me-3"></i>
+                {% elif category == 'warning' %}
+                <i class="fas fa-exclamation-triangle fs-4 me-3"></i>
+                {% else %}
+                <i class="fas fa-info-circle fs-4 me-3"></i>
+                {% endif %}
+                <div class="fw-medium">{{ message }}</div>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         {% endfor %}
         {% endif %}
         {% endwith %}
+    </div>
 
+    <!-- Main Content -->
+    <div class="container mt-4">
         {% block content %}{% endblock %}
     </div>
 
     <!-- Footer -->
-    <footer class="bg-dark text-light py-4 mt-5">
+    <footer class="bg-dark text-light py-4 mt-auto w-100 border-top border-primary border-3">
         <div class="container text-center">
             <p class="mb-2">&copy; 2026 UniServe</p>
             <p class="mb-0 small">
@@ -115,9 +233,167 @@
         </div>
     </footer>
 
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+        <div id="notificationToast" class="toast text-white bg-primary border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-primary text-white border-0">
+                <i class="fas fa-bell me-2"></i>
+                <strong class="me-auto" id="toastTitle">New Notification</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                You have new activity!
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap & Custom JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    {% if session.user_id %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let lastMessages = 0;
+        let lastRequests = 0;
+        let isFirstPoll = true;
+        const toastEl = document.getElementById('notificationToast');
+        // Prevent toast error if script loaded without Bootstrap mapped properly
+        const toast = new bootstrap.Toast(toastEl, { delay: 6000 });
+        
+        function pollNotifications() {
+            fetch('/api/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    if (isFirstPoll) {
+                        lastMessages = data.unread_messages;
+                        lastRequests = data.pending_requests;
+                        updateBadges(data);
+                        isFirstPoll = false;
+                        return;
+                    }
+                    
+                    let triggered = false;
+                    let title = '';
+                    let body = '';
+                    
+                    if (data.unread_messages > lastMessages) {
+                        title = 'New Message!';
+                        body = 'You have received a new message.';
+                        triggered = true;
+                    } else if (data.pending_requests > lastRequests) {
+                        title = 'New Service Request!';
+                        body = 'Someone has requested a service.';
+                        triggered = true;
+                    }
+                    
+                    if (triggered) {
+                        document.getElementById('toastTitle').textContent = title;
+                        document.getElementById('toastBody').textContent = body;
+                        toast.show();
+                    }
+                    
+                    lastMessages = data.unread_messages;
+                    lastRequests = data.pending_requests;
+                    updateBadges(data);
+                })
+                .catch(err => console.error('Notification error', err));
+        }
+
+        function updateBadges(data) {
+            // Find and update the messages badge
+            const msgLink = document.querySelector('a[href="{{ url_for("messages") }}"]');
+            if (msgLink) {
+                let badge = msgLink.querySelector('span.badge');
+                if (data.unread_messages > 0) {
+                    if (!badge) {
+                        msgLink.insertAdjacentHTML('beforeend', ' <span class="badge bg-danger rounded-pill">' + data.unread_messages + '</span>');
+                    } else {
+                        badge.textContent = data.unread_messages;
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+            }
+            
+            // Find and update the requests badge
+            const reqLink = document.querySelector('a[href="{{ url_for("service_requests") }}"]');
+            if (reqLink) {
+                let rBadge = reqLink.querySelector('span.badge');
+                if (data.pending_requests > 0) {
+                    if (!rBadge) {
+                        reqLink.insertAdjacentHTML('beforeend', ' <span class="badge bg-danger rounded-pill">' + data.pending_requests + '</span>');
+                    } else {
+                        rBadge.textContent = data.pending_requests;
+                    }
+                } else if (rBadge) {
+                    rBadge.remove();
+                }
+            }
+        }
+        
+        // Poll every 10 seconds for real-time responsiveness
+        setInterval(pollNotifications, 10000);
+        // Initial poll to set badges on page load
+        pollNotifications();
+    });
+    </script>
+    {% endif %}
+    
+    <!-- Page Transition Loader Script -->
+    <script>
+        // Hide loader natively when all page assets (images, CSS) have fully downloaded.
+        // This makes the loading time directly proportional to the user's internet speed.
+        window.addEventListener('load', function() {
+            const loader = document.getElementById('page-loader');
+            if (loader) {
+                // A tiny 150ms buffer prevents 0-frame flashes on cached pages
+                setTimeout(() => loader.classList.add('loader-hidden'), 150);
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gracefully auto-dismiss system notifications after 2 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.flash-alert');
+                alerts.forEach(function(alertElement) {
+                    alertElement.classList.add('fade-out');
+                    setTimeout(() => alertElement.remove(), 400); // Remove from DOM after CSS finishes
+                });
+            }, 2000);
+        });
+        
+        // Show loader actively when users trigger standard hyperlink navigation
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('a');
+            if (target && target.href) {
+                // Ignore hash jumps, external tab targets, or Bootstrap modal toggles
+                if (!target.href.includes('#') && target.target !== '_blank' && !target.hasAttribute('data-bs-toggle') && !target.hasAttribute('data-bs-dismiss')) {
+                    if(target.href !== window.location.href && !target.href.includes('javascript:')) {
+                        const loader = document.getElementById('page-loader');
+                        if (loader) {
+                            loader.classList.remove('loader-hidden');
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered successfully.');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
 </body>
 
 </html>

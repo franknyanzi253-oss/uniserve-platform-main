@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4 mt-2">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="display-6"><i class="fas fa-id-card-alt text-primary me-2"></i>Provider Verifications</h2>
+            <p class="text-muted mb-0">Review and manage student ID verification requests.</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4" id="verificationTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-bold" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-tab-pane" type="button" role="tab" aria-controls="pending-tab-pane" aria-selected="true">
+            Pending <span class="badge bg-warning text-dark ms-1">{{ pending_users|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="verified-tab" data-bs-toggle="tab" data-bs-target="#verified-tab-pane" type="button" role="tab" aria-controls="verified-tab-pane" aria-selected="false">
+            Verified <span class="badge bg-success ms-1">{{ verified_users|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected-tab-pane" type="button" role="tab" aria-controls="rejected-tab-pane" aria-selected="false">
+            Rejected <span class="badge bg-danger ms-1">{{ rejected_users|length }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="verificationTabsContent">
+    <!-- PENDING TAB -->
+    <div class="tab-pane fade show active" id="pending-tab-pane" role="tabpanel" aria-labelledby="pending-tab" tabindex="0">
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Provider Name</th>
+                            <th>Email</th>
+                            <th>Document</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in pending_users %}
+                        <tr>
+                            <td class="ps-4 text-muted">#{{ u.id }}</td>
+                            <td class="fw-semibold">{{ u.name }}</td>
+                            <td><a href="mailto:{{ u.email }}" class="text-decoration-none text-body">{{ u.email }}</a></td>
+                            <td>
+                                {% if u.student_id_document %}
+                                <a href="{{ url_for('static', filename='uploads/documents/' + u.student_id_document) }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-external-link-alt me-1"></i>View ID
+                                </a>
+                                {% else %}
+                                <span class="text-muted">No document</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <form action="{{ url_for('update_verification_status', user_id=u.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="status" value="verified">
+                                    <button type="submit" class="btn btn-sm btn-success px-3" onclick="return confirm('Approve verification for {{ u.name }}?');">
+                                        <i class="fas fa-check me-1"></i>Approve
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('update_verification_status', user_id=u.id) }}" method="POST" class="d-inline ms-1">
+                                    <input type="hidden" name="status" value="rejected">
+                                    <button type="submit" class="btn btn-sm btn-danger px-3" onclick="return confirm('Reject verification for {{ u.name }}?');">
+                                        <i class="fas fa-times me-1"></i>Reject
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">No pending verifications.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VERIFIED TAB -->
+    <div class="tab-pane fade" id="verified-tab-pane" role="tabpanel" aria-labelledby="verified-tab" tabindex="0">
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Provider Name</th>
+                            <th>Email</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in verified_users %}
+                        <tr>
+                            <td class="ps-4 text-muted">#{{ u.id }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ u.name }} <i class="fas fa-check-circle text-primary ms-1"></i></div>
+                            </td>
+                            <td>{{ u.email }}</td>
+                            <td class="text-end pe-4">
+                                <form action="{{ url_for('update_verification_status', user_id=u.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="status" value="unverified">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning px-3" onclick="return confirm('Revoke verification for {{ u.name }}?');">
+                                        Revoke Status
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">No verified providers.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- REJECTED TAB -->
+    <div class="tab-pane fade" id="rejected-tab-pane" role="tabpanel" aria-labelledby="rejected-tab" tabindex="0">
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Provider Name</th>
+                            <th>Email</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in rejected_users %}
+                        <tr>
+                            <td class="ps-4 text-muted">#{{ u.id }}</td>
+                            <td class="fw-semibold">{{ u.name }}</td>
+                            <td>{{ u.email }}</td>
+                            <td class="text-end pe-4">
+                                <form action="{{ url_for('update_verification_status', user_id=u.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="status" value="unverified">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary px-3" onclick="return confirm('Reset verification status for {{ u.name }} so they can upload again immediately?');">
+                                        Reset to Unverified
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">No rejected verifications.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

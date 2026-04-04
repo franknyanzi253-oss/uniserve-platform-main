@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4 mt-2">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="display-6"><i class="fas fa-shield-alt text-primary me-2"></i>Admin Dashboard</h2>
+            <p class="text-muted mb-0">Overview of platform activities and statistics.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h5 class="card-title text-muted mb-3"><i class="fas fa-users me-2"></i>Total Users</h5>
+                <h1 class="display-3 fw-bold text-primary mb-4">{{ total_users }}</h1>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary mt-auto">Manage Users</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h5 class="card-title text-muted mb-3"><i class="fas fa-clipboard-list me-2"></i>Active Services</h5>
+                <h1 class="display-3 fw-bold text-success mb-0">{{ total_services }}</h1>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h5 class="card-title text-muted mb-3"><i class="fas fa-envelope-open-text me-2"></i>Service Requests</h5>
+                <h1 class="display-3 fw-bold text-info mb-0">{{ total_requests }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h5 class="card-title text-muted mb-3"><i class="fas fa-id-card-alt me-2"></i>Verifications</h5>
+                <h1 class="display-3 fw-bold text-warning mb-4">{{ pending_verifications }}</h1>
+                <a href="{{ url_for('admin_verifications') }}" class="btn btn-outline-warning mt-auto text-dark">Manage Verifications</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

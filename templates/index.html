@@ -3,12 +3,12 @@
 {% block content %}
 <div class="jumbotron bg-light p-5 rounded">
     <h1 class="display-4">Welcome to UniServe</h1>
-    <p class="lead">A peer-to-peer platform connecting UICT students for campus services.</p>
+    <p class="lead">A peer-to-peer platform connecting Campus students for campus services.</p>
     <hr class="my-4">
     <p>Find or offer services like tutoring, graphic design, computer repair, and more within our campus community.</p>
     <a class="btn btn-primary btn-lg" href="{{ url_for('services') }}" role="button">Browse Services</a>
     {% if not session.user_id %}
-        <a class="btn btn-outline-primary btn-lg" href="{{ url_for('register') }}" role="button">Join Now</a>
+    <a class="btn btn-primary btn-lg ms-2" href="{{ url_for('register') }}" role="button">Join Now</a>
     {% endif %}
 </div>
 
@@ -49,6 +49,12 @@
                 <p class="card-text">{{ service.description[:100] }}...</p>
                 <p class="card-text"><small class="text-muted">Category: {{ service.category }}</small></p>
                 <p class="card-text"><small class="text-muted">Price: {{ service.price }}</small></p>
+                <p class="card-text m-0"><small class="text-muted">
+                    By: {{ service.provider.name }}
+                    {% if service.provider.verification_status == 'verified' %}
+                    <i class="fas fa-check-circle text-primary ms-1" title="Verified Provider"></i>
+                    {% endif %}
+                </small></p>
             </div>
             <div class="card-footer">
                 <a href="{{ url_for('services') }}" class="btn btn-sm btn-primary">View Details</a>
