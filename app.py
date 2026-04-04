@@ -121,34 +121,9 @@ class Message(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
 
-# Ensure tables are created automatically on import (solves database initialization on Render)
+# Ensure tables are created automatically on import
 with app.app_context():
     db.create_all()
-    
-    # Auto-migrations for SQLite and PostgreSQL
-    try:
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;'))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        
-    try:
-        db.session.execute(text('ALTER TABLE "user" ADD COLUMN student_id_document VARCHAR(200);'))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        
-    try:
-        db.session.execute(text("ALTER TABLE \"user\" ADD COLUMN verification_status VARCHAR(20) DEFAULT 'unverified';"))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        
-    try:
-        db.session.execute(text("UPDATE \"user\" SET verification_status = 'unverified' WHERE verification_status IS NULL;"))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
 
 def admin_required(f):
     @wraps(f)
