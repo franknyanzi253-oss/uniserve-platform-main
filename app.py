@@ -210,6 +210,12 @@ def login():
         user = User.query.filter_by(email=email).first()
         
         if user and check_password_hash(user.password, password):
+            # Auto-promote admin via environment variable
+            admin_email = os.environ.get('ADMIN_EMAIL')
+            if admin_email and user.email.lower() == admin_email.lower() and not getattr(user, 'is_admin', False):
+                user.is_admin = True
+                db.session.commit()
+                
             session['user_id'] = user.id
             session['user_name'] = user.name
             session['user_type'] = user.user_type
