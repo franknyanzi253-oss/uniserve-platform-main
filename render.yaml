@@ -3,7 +3,6 @@ services:
   - type: web
     name: uniserve-platform
     env: python
-    pythonVersion: 3.11.9
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     envVars:
