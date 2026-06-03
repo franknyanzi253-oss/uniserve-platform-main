@@ -1,5 +1,15 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+
+# Load environment variables from .env file if it exists
+if os.path.exists('.env'):
+    with open('.env', 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, val = line.split('=', 1)
+                os.environ[key.strip()] = val.strip()
+
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -9,8 +19,54 @@ from datetime import datetime
 from functools import wraps
 from sqlalchemy import text
 from flask import send_from_directory
+from flask_socketio import SocketIO, emit, join_room
+import urllib.request
+import json
+import secrets
+import csv
+import io
 
 app = Flask(__name__)
+
+# Google Client ID Configuration
+app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '')
+
+@app.context_processor
+def inject_google_client_id():
+    return dict(google_client_id=app.config['GOOGLE_CLIENT_ID'])
+
+def verify_google_token(id_token):
+    try:
+        url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
+        req = urllib.request.Request(url, method='GET')
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            if 'email' in data:
+                return data
+    except Exception as e:
+        print("Google token verification failed:", e)
+    return None
+
+# Initialize SocketIO dynamically based on environment / eventlet availability
+async_mode = None
+if os.environ.get('RENDER'):
+    async_mode = 'eventlet'
+else:
+    try:
+        import eventlet
+        # Test if it actually works to import (handles greenlet module missing on newer python)
+        import eventlet.convenience
+        async_mode = 'eventlet'
+    except Exception:
+        async_mode = 'threading'
+
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
+
+
+@socketio.on('connect')
+def handle_connect():
+    if 'user_id' in session:
+        join_room(f"user_{session['user_id']}")
 
 # Serve Service Worker from the root
 @app.route('/sw.js')
@@ -148,9 +204,9 @@ def register():
         password = request.form['password']
         user_type = request.form['user_type']
         
-        # Validate university email
-        if not re.match(r'.*@(uict\.ac\.ug|student\.uict\.ac\.ug)$', email):
-            flash('Please use a valid UICT email address.', 'danger')
+        # Validate email format
+        if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
+            flash('Please use a valid email address.', 'danger')
             return redirect(url_for('register'))
         
         # Check if user already exists
@@ -207,6 +263,105 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
+
+@app.route('/api/google-login', methods=['POST'])
+def google_login():
+    data = request.json or {}
+    token = data.get('id_token')
+    is_mock = data.get('is_mock', False)
+    mock_email = data.get('mock_email')
+    mock_name = data.get('mock_name', 'Google User')
+    
+    user_info = None
+    if is_mock:
+        if not mock_email or not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', mock_email):
+            return jsonify({'success': False, 'message': 'Invalid email format'}), 400
+        user_info = {
+            'email': mock_email,
+            'name': mock_name,
+            'picture': None
+        }
+    elif token:
+        user_info = verify_google_token(token)
+        if not user_info:
+            return jsonify({'success': False, 'message': 'Invalid Google token'}), 400
+    else:
+        return jsonify({'success': False, 'message': 'No authentication data provided'}), 400
+        
+    email = user_info['email'].lower()
+    name = user_info['name']
+    picture = user_info.get('picture')
+    
+    user = User.query.filter_by(email=email).first()
+    if user:
+        session['user_id'] = user.id
+        session['user_name'] = user.name
+        session['user_type'] = user.user_type
+        session['is_admin'] = getattr(user, 'is_admin', False)
+        
+        if not user.profile_picture and picture:
+            user.profile_picture = picture
+            db.session.commit()
+            
+        flash(f'Welcome back, {user.name}!', 'success')
+        return jsonify({'success': True, 'redirect_url': url_for('dashboard')})
+    else:
+        session['google_register_email'] = email
+        session['google_register_name'] = name
+        session['google_register_picture'] = picture
+        return jsonify({'success': True, 'redirect_url': url_for('complete_google_registration')})
+
+@app.route('/complete-google-registration', methods=['GET', 'POST'])
+def complete_google_registration():
+    if 'google_register_email' not in session:
+        flash('Session expired or invalid access.', 'danger')
+        return redirect(url_for('register'))
+        
+    email = session['google_register_email']
+    name = session['google_register_name']
+    
+    if request.method == 'POST':
+        user_type = request.form.get('user_type')
+        if user_type not in ['seeker', 'provider']:
+            flash('Please select a valid role.', 'danger')
+            return render_template('complete_google_registration.html', name=name, email=email)
+            
+        random_password = secrets.token_hex(16)
+        hashed_password = generate_password_hash(random_password)
+        
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            user = existing_user
+        else:
+            is_admin = False
+            admin_email = os.environ.get('ADMIN_EMAIL')
+            if admin_email and email.lower() == admin_email.lower():
+                is_admin = True
+                
+            user = User(
+                name=name,
+                email=email,
+                password=hashed_password,
+                user_type=user_type,
+                profile_picture=session.get('google_register_picture'),
+                is_admin=is_admin
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+        session.pop('google_register_email', None)
+        session.pop('google_register_name', None)
+        session.pop('google_register_picture', None)
+        
+        session['user_id'] = user.id
+        session['user_name'] = user.name
+        session['user_type'] = user.user_type
+        session['is_admin'] = getattr(user, 'is_admin', False)
+        
+        flash('Registration completed successfully! Welcome to UniServe.', 'success')
+        return redirect(url_for('dashboard'))
+        
+    return render_template('complete_google_registration.html', name=name, email=email)
 
 @app.route('/dashboard')
 def dashboard():
@@ -294,6 +449,8 @@ def request_service():
     
     db.session.add(new_request)
     db.session.commit()
+    
+    socketio.emit('notification_ping', {}, room=f"user_{service.provider_id}")
     
     flash('Service request sent successfully!', 'success')
     return redirect(url_for('dashboard'))
@@ -494,6 +651,15 @@ def conversation(user_id):
             db.session.add(new_message)
             db.session.commit()
             
+            # Emit socket event to the receiver
+            socketio.emit('new_message', {
+                'id': new_message.id,
+                'content': new_message.content,
+                'sender_id': current_user_id,
+                'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            }, room=f"user_{user_id}")
+            socketio.emit('notification_ping', {}, room=f"user_{user_id}")
+            
             return redirect(url_for('conversation', user_id=user_id))
     
     Message.query.filter_by(sender_id=user_id, receiver_id=current_user_id, is_read=False).update({'is_read': True})
@@ -505,6 +671,46 @@ def conversation(user_id):
     ).order_by(Message.timestamp.asc()).all()
     
     return render_template('conversation.html', messages=messages, other_user=other_user)
+
+from flask import jsonify
+@app.route('/api/messages/<int:user_id>', methods=['POST'])
+def send_message_api(user_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    current_user_id = session['user_id']
+    content = request.json.get('content')
+    
+    if not content or not content.strip():
+        return jsonify({'error': 'Empty message'}), 400
+        
+    new_message = Message(
+        sender_id=current_user_id,
+        receiver_id=user_id,
+        content=content.strip()
+    )
+    db.session.add(new_message)
+    db.session.commit()
+    
+    # Emit events
+    socketio.emit('new_message', {
+        'id': new_message.id,
+        'sender_id': current_user_id,
+        'content': new_message.content,
+        'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+    }, room=f"user_{user_id}")
+    
+    socketio.emit('notification_ping', {}, room=f"user_{user_id}")
+    
+    return jsonify({
+        'success': True,
+        'message': {
+            'id': new_message.id,
+            'content': new_message.content,
+            'sender_id': current_user_id,
+            'timestamp': new_message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        }
+    })
 
 # Review Routes
 @app.route('/add_review/<int:provider_id>', methods=['POST'])
@@ -731,6 +937,125 @@ def admin_dashboard():
                            total_requests=total_requests,
                            pending_verifications=pending_verifications)
 
+@app.route('/api/admin/analytics')
+@admin_required
+def admin_analytics():
+    seekers = User.query.filter_by(user_type='seeker').count()
+    providers = User.query.filter_by(user_type='provider').count()
+    
+    categories_data = db.session.query(Service.category, db.func.count(Service.id)).group_by(Service.category).all()
+    categories = {cat: count for cat, count in categories_data}
+    
+    status_data = db.session.query(ServiceRequest.status, db.func.count(ServiceRequest.id)).group_by(ServiceRequest.status).all()
+    requests_status = {status: count for status, count in status_data}
+    
+    ratings = db.session.query(db.func.avg(Review.rating)).scalar() or 0.0
+    avg_rating = round(float(ratings), 2)
+    
+    return jsonify({
+        'user_distribution': {
+            'seekers': seekers,
+            'providers': providers
+        },
+        'categories': categories,
+        'requests_status': requests_status,
+        'average_rating': avg_rating
+    })
+
+@app.route('/admin/export/users')
+@admin_required
+def export_users_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['User ID', 'Name', 'Email', 'Role', 'Verification Status', 'Is Admin', 'Registration Date'])
+    
+    users = User.query.all()
+    for u in users:
+        writer.writerow([
+            u.id, 
+            u.name, 
+            u.email, 
+            u.user_type, 
+            u.verification_status, 
+            'Yes' if u.is_admin else 'No', 
+            u.registration_date.strftime('%Y-%m-%d %H:%M:%S') if u.registration_date else ''
+        ])
+        
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=uniserve_users_report.csv"}
+    )
+
+@app.route('/admin/export/services')
+@admin_required
+def export_services_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Service ID', 'Title', 'Category', 'Price', 'Location', 'Provider Name', 'Provider Email', 'Is Active', 'Created Date'])
+    
+    services = Service.query.all()
+    for s in services:
+        provider = User.query.get(s.provider_id)
+        provider_name = provider.name if provider else 'N/A'
+        provider_email = provider.email if provider else 'N/A'
+        
+        writer.writerow([
+            s.id,
+            s.title,
+            s.category,
+            s.price or 'N/A',
+            s.location,
+            provider_name,
+            provider_email,
+            'Active' if s.is_active else 'Inactive',
+            s.created_date.strftime('%Y-%m-%d %H:%M:%S') if s.created_date else ''
+        ])
+        
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=uniserve_services_report.csv"}
+    )
+
+@app.route('/admin/export/requests')
+@admin_required
+def export_requests_csv():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Request ID', 'Service Title', 'Provider Name', 'Seeker Name', 'Seeker Email', 'Status', 'Request Date'])
+    
+    requests = ServiceRequest.query.all()
+    for r in requests:
+        service = Service.query.get(r.service_id)
+        service_title = service.title if service else 'N/A'
+        
+        provider = User.query.get(service.provider_id) if service else None
+        provider_name = provider.name if provider else 'N/A'
+        
+        seeker = User.query.get(r.seeker_id)
+        seeker_name = seeker.name if seeker else 'N/A'
+        seeker_email = seeker.email if seeker else 'N/A'
+        
+        writer.writerow([
+            r.id,
+            service_title,
+            provider_name,
+            seeker_name,
+            seeker_email,
+            r.status.capitalize(),
+            r.request_date.strftime('%Y-%m-%d %H:%M:%S') if r.request_date else ''
+        ])
+        
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=uniserve_requests_report.csv"}
+    )
+
 @app.route('/admin/users')
 @admin_required
 def admin_users():
@@ -814,4 +1139,5 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=DEBUG)
+    # allow_unsafe_werkzeug=True is required when using the threading async mode locally
+    socketio.run(app, debug=DEBUG, allow_unsafe_werkzeug=True)

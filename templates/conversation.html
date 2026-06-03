@@ -50,9 +50,9 @@
             </div>
             
             <div class="card-footer">
-                <form method="POST" class="d-flex">
-                    <input type="text" name="content" class="form-control me-2" placeholder="Type your message..." required>
-                    <button type="submit" class="btn btn-primary">
+                <form id="chatForm" class="d-flex">
+                    <input type="text" id="contentInput" name="content" class="form-control me-2" placeholder="Type your message..." required autocomplete="off">
+                    <button type="submit" class="btn btn-primary" id="sendBtn">
                         <i class="fas fa-paper-plane"></i> Send
                     </button>
                 </form>
@@ -62,10 +62,87 @@
 </div>
 
 <script>
-// Scroll to bottom of messages
+// Utility to cleanly append messages
+function appendMessage(msg, isSelf) {
+    const messageContainer = document.getElementById('messageContainer');
+    const noMsgNotice = messageContainer.querySelector('.text-center.py-4');
+    if (noMsgNotice) {
+        noMsgNotice.remove();
+    }
+    
+    // Safety escape HTML to prevent XSS
+    const safeContent = msg.content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const nameStr = isSelf ? '{{ session.user_name }}' : '{{ other_user.name }}';
+    
+    const wrapperHTML = `
+        <div class="d-flex mb-3 ${isSelf ? 'justify-content-end' : ''}">
+            <div class="${isSelf ? 'text-end' : ''}" style="max-width: 70%;">
+                <div class="d-flex align-items-center ${isSelf ? 'justify-content-end' : ''} mb-1">
+                    <small class="text-muted me-2">${nameStr}</small>
+                    <small class="text-muted">${msg.timestamp}</small>
+                </div>
+                <div class="p-3 rounded ${isSelf ? 'bg-primary text-white' : 'bg-light text-dark'}">
+                    ${safeContent}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    messageContainer.insertAdjacentHTML('beforeend', wrapperHTML);
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const messageContainer = document.getElementById('messageContainer');
-    messageContainer.scrollTop = messageContainer.scrollHeight;
+    if(messageContainer) {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+    
+    // AJAX message submission
+    const chatForm = document.getElementById('chatForm');
+    const contentInput = document.getElementById('contentInput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const content = contentInput.value.trim();
+        if (!content) return;
+        
+        sendBtn.disabled = true;
+        
+        fetch("{{ url_for('send_message_api', user_id=other_user.id) }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ content: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                appendMessage(data.message, true);
+                contentInput.value = '';
+                contentInput.focus();
+            } else {
+                console.error("Failed to send message", data);
+            }
+            sendBtn.disabled = false;
+        })
+        .catch(err => {
+            console.error("Network error", err);
+            sendBtn.disabled = false;
+        });
+    });
+    
+    // Listen for WebSocket incoming messages specifically from this user window
+    if (typeof socket !== 'undefined') {
+        socket.on('new_message', function(data) {
+            // Only render if the incoming message is from the user we are chatting with
+            if (data.sender_id === parseInt('{{ other_user.id }}')) {
+                appendMessage(data, false);
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

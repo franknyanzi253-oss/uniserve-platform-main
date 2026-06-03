@@ -252,42 +252,53 @@
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     
     {% if session.user_id %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
+    const socket = io();
+    
     document.addEventListener('DOMContentLoaded', function() {
         let lastMessages = 0;
         let lastRequests = 0;
-        let isFirstPoll = true;
+        let isFirstFetch = true;
+        
         const toastEl = document.getElementById('notificationToast');
-        // Prevent toast error if script loaded without Bootstrap mapped properly
         const toast = new bootstrap.Toast(toastEl, { delay: 6000 });
         
-        function pollNotifications() {
+        // Initial fetch to set badges on page load
+        fetchNotifications(false);
+        
+        // Listen for real-time notification pings
+        socket.on('notification_ping', function() {
+            fetchNotifications(true); // Bring up toast on push
+        });
+        
+        function fetchNotifications(triggerToast) {
             fetch('/api/notifications')
                 .then(response => response.json())
                 .then(data => {
-                    if (isFirstPoll) {
+                    if (isFirstFetch) {
                         lastMessages = data.unread_messages;
                         lastRequests = data.pending_requests;
                         updateBadges(data);
-                        isFirstPoll = false;
+                        isFirstFetch = false;
                         return;
                     }
                     
-                    let triggered = false;
                     let title = '';
                     let body = '';
+                    let showToast = false;
                     
                     if (data.unread_messages > lastMessages) {
                         title = 'New Message!';
                         body = 'You have received a new message.';
-                        triggered = true;
+                        showToast = true;
                     } else if (data.pending_requests > lastRequests) {
                         title = 'New Service Request!';
                         body = 'Someone has requested a service.';
-                        triggered = true;
+                        showToast = true;
                     }
                     
-                    if (triggered) {
+                    if (triggerToast && showToast) {
                         document.getElementById('toastTitle').textContent = title;
                         document.getElementById('toastBody').textContent = body;
                         toast.show();
@@ -301,7 +312,6 @@
         }
 
         function updateBadges(data) {
-            // Find and update the messages badge
             const msgLink = document.querySelector('a[href="{{ url_for("messages") }}"]');
             if (msgLink) {
                 let badge = msgLink.querySelector('span.badge');
@@ -316,7 +326,6 @@
                 }
             }
             
-            // Find and update the requests badge
             const reqLink = document.querySelector('a[href="{{ url_for("service_requests") }}"]');
             if (reqLink) {
                 let rBadge = reqLink.querySelector('span.badge');
@@ -331,11 +340,6 @@
                 }
             }
         }
-        
-        // Poll every 10 seconds for real-time responsiveness
-        setInterval(pollNotifications, 10000);
-        // Initial poll to set badges on page load
-        pollNotifications();
     });
     </script>
     {% endif %}

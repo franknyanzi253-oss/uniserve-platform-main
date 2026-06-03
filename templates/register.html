@@ -2,21 +2,21 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="mb-0">Create UniServe Account</h4>
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="card-header bg-primary text-white text-center py-3 border-0" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                <h4 class="mb-0 fw-bold">Create UniServe Account</h4>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form method="POST">
                     <div class="mb-3">
                         <label for="name" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. John Doe" required>
                     </div>
                     <div class="mb-3">
-                        <label for="email" class="form-label">UICT Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                        <div class="form-text">Must be a valid UICT email address (e.g., name@uict.ac.ug)</div>
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="e.g. name@gmail.com" required>
+                        <div class="form-text">Use any valid email address. Google/Gmail emails supported.</div>
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
@@ -30,13 +30,81 @@
                             <option value="provider">Offer Services</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-3 fw-semibold">Register</button>
                 </form>
-                <div class="mt-3 text-center">
-                    <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+                
+                <div class="text-center my-3 text-muted position-relative">
+                    <hr class="w-100 my-2">
+                    <span class="bg-white px-2 position-absolute top-50 start-50 translate-middle text-uppercase small" style="font-size: 0.75rem; letter-spacing: 1px;">or</span>
+                </div>
+                
+                <div id="google-signin-wrapper" class="d-flex flex-column gap-2 align-items-center">
+                    {% if google_client_id and google_client_id != 'your-google-client-id-here' %}
+                    <!-- Google Identity Services Button -->
+                    <script src="https://accounts.google.com/gsi/client" async defer></script>
+                    <div id="g_id_onload"
+                         data-client_id="{{ google_client_id }}"
+                         data-context="signup"
+                         data-ux_mode="popup"
+                         data-callback="onGoogleSignIn"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin w-100 d-flex justify-content-center"
+                         data-type="standard"
+                         data-shape="rectangular"
+                         data-theme="outline"
+                         data-text="signup_with"
+                         data-size="large"
+                         data-logo_alignment="left"
+                         data-width="320">
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning py-2 px-3 small w-100 text-center rounded-3 border-0 shadow-sm" role="alert">
+                        <i class="fas fa-exclamation-triangle text-warning me-1"></i> Google Sign-in requires configuration. Please set <code>GOOGLE_CLIENT_ID</code> in your <code>.env</code> file.
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-4 text-center">
+                    <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}" class="fw-semibold">Login here</a></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    function handleBackendGoogleLogin(payload) {
+        const loader = document.getElementById('page-loader');
+        if (loader) loader.classList.remove('loader-hidden');
+        
+        fetch('/api/google-login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                if (loader) loader.classList.add('loader-hidden');
+                alert(data.message || 'Google Authentication failed');
+            }
+        })
+        .catch(err => {
+            if (loader) loader.classList.add('loader-hidden');
+            console.error(err);
+            alert('An error occurred during Google sign-in.');
+        });
+    }
+
+    function onGoogleSignIn(response) {
+        handleBackendGoogleLogin({
+            id_token: response.credential
+        });
+    }
+</script>
 {% endblock %}

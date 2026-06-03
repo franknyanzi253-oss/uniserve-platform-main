@@ -1,52 +1,206 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mb-4 mt-2">
-    <div class="col-12 d-flex justify-content-between align-items-center">
+<div class="row mb-4 mt-2 animate__animated animate__fadeIn">
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-            <h2 class="display-6"><i class="fas fa-shield-alt text-primary me-2"></i>Admin Dashboard</h2>
-            <p class="text-muted mb-0">Overview of platform activities and statistics.</p>
+            <h2 class="display-6 fw-bold"><i class="fas fa-shield-alt text-primary me-2"></i>Admin Dashboard</h2>
+            <p class="text-muted mb-0">Overview of platform activities, statistics, and reports.</p>
         </div>
     </div>
 </div>
 
+<!-- Main Statistics Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 h-100 py-2 border-start border-primary border-4">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h6 class="card-title text-muted text-uppercase mb-2 small"><i class="fas fa-users me-2 text-primary"></i>Total Users</h6>
+                <h2 class="fw-bold mb-3 text-dark">{{ total_users }}</h2>
+                <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-outline-primary mt-auto rounded-3">Manage Users</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 h-100 py-2 border-start border-success border-4">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h6 class="card-title text-muted text-uppercase mb-2 small"><i class="fas fa-clipboard-list me-2 text-success"></i>Active Services</h6>
+                <h2 class="fw-bold mb-3 text-dark">{{ total_services }}</h2>
+                <a href="{{ url_for('services') }}" class="btn btn-sm btn-outline-success mt-auto rounded-3">View Services</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 h-100 py-2 border-start border-info border-4">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h6 class="card-title text-muted text-uppercase mb-2 small"><i class="fas fa-envelope-open-text me-2 text-info"></i>Service Requests</h6>
+                <h2 class="fw-bold mb-3 text-dark">{{ total_requests }}</h2>
+                <a href="{{ url_for('service_requests') }}" class="btn btn-sm btn-outline-info mt-auto rounded-3">View Requests</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 h-100 py-2 border-start border-warning border-4">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <h6 class="card-title text-muted text-uppercase mb-2 small"><i class="fas fa-id-card-alt me-2 text-warning"></i>Pending Verifications</h6>
+                <h2 class="fw-bold mb-3 text-dark">{{ pending_verifications }}</h2>
+                <a href="{{ url_for('admin_verifications') }}" class="btn btn-sm btn-outline-warning mt-auto text-dark rounded-3">Manage ID Verifications</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Reports & Charts Section -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-chart-pie text-primary me-2"></i>User Distribution</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="min-height: 300px;">
+                <div style="width: 80%; max-width: 280px;">
+                    <canvas id="userDistChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-chart-bar text-success me-2"></i>Services by Category</h5>
+            </div>
+            <div class="card-body" style="min-height: 300px;">
+                <canvas id="categoriesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Downloadable Export Reports -->
 <div class="row">
-    <div class="col-md-3 mb-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <h5 class="card-title text-muted mb-3"><i class="fas fa-users me-2"></i>Total Users</h5>
-                <h1 class="display-3 fw-bold text-primary mb-4">{{ total_users }}</h1>
-                <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary mt-auto">Manage Users</a>
+    <div class="col-12">
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-download text-muted me-2"></i>Export Platform Data Reports</h5>
+                <p class="text-muted small mb-0">Download up-to-date worksheets containing complete system logs.</p>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3 mb-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <h5 class="card-title text-muted mb-3"><i class="fas fa-clipboard-list me-2"></i>Active Services</h5>
-                <h1 class="display-3 fw-bold text-success mb-0">{{ total_services }}</h1>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3 mb-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <h5 class="card-title text-muted mb-3"><i class="fas fa-envelope-open-text me-2"></i>Service Requests</h5>
-                <h1 class="display-3 fw-bold text-info mb-0">{{ total_requests }}</h1>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3 mb-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
-                <h5 class="card-title text-muted mb-3"><i class="fas fa-id-card-alt me-2"></i>Verifications</h5>
-                <h1 class="display-3 fw-bold text-warning mb-4">{{ pending_verifications }}</h1>
-                <a href="{{ url_for('admin_verifications') }}" class="btn btn-outline-warning mt-auto text-dark">Manage Verifications</a>
+            <div class="card-body py-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Users Worksheet</h6>
+                                <p class="text-muted small mb-0">Registration dates & status</p>
+                            </div>
+                            <a href="{{ url_for('export_users_csv') }}" class="btn btn-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-file-download fs-5"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Services Worksheet</h6>
+                                <p class="text-muted small mb-0">Listed skills & categories</p>
+                            </div>
+                            <a href="{{ url_for('export_services_csv') }}" class="btn btn-success rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-file-download fs-5"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Service Requests</h6>
+                                <p class="text-muted small mb-0">Fulfillments & logs</p>
+                            </div>
+                            <a href="{{ url_for('export_requests_csv') }}" class="btn btn-info text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-file-download fs-5"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch('/api/admin/analytics')
+            .then(res => res.json())
+            .then(data => {
+                // 1. User Distribution Chart
+                const seekers = data.user_distribution.seekers;
+                const providers = data.user_distribution.providers;
+                
+                const userDistCtx = document.getElementById('userDistChart').getContext('2d');
+                new Chart(userDistCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Seekers (Find)', 'Providers (Offer)'],
+                        datasets: [{
+                            data: [seekers, providers],
+                            backgroundColor: ['#0d6efd', '#198754'],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            }
+                        }
+                    }
+                });
+
+                // 2. Services Categories Chart
+                const categoriesObj = data.categories;
+                const categoriesLabels = Object.keys(categoriesObj);
+                const categoriesCounts = Object.values(categoriesObj);
+
+                const categoriesCtx = document.getElementById('categoriesChart').getContext('2d');
+                new Chart(categoriesCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: categoriesLabels.length > 0 ? categoriesLabels : ['No listings yet'],
+                        datasets: [{
+                            label: 'Number of Active Listings',
+                            data: categoriesCounts.length > 0 ? categoriesCounts : [0],
+                            backgroundColor: 'rgba(25, 135, 84, 0.75)',
+                            borderColor: '#198754',
+                            borderWidth: 1.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(err => console.error("Error loading analytics data:", err));
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,23 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Local environment and secrets
+.env
+
+# Database files
+instance/database.db
+instance/*.db
+
+# Uploaded media
+static/uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
