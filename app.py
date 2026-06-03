@@ -1147,5 +1147,7 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
-    # allow_unsafe_werkzeug=True is required when using the threading async mode locally
-    socketio.run(app, debug=DEBUG, allow_unsafe_werkzeug=True)
+    port = int(os.environ.get('PORT', 5000))
+    host = '0.0.0.0'
+    print(f"Starting UniServe on {host}:{port} (RENDER={os.environ.get('RENDER')})")
+    socketio.run(app, host=host, port=port, debug=DEBUG, allow_unsafe_werkzeug=True)
