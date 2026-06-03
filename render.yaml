@@ -17,5 +17,5 @@ services:
 
 databases:
   - name: uniserve-db
-    databaseName: uniserve
+    databaseName: uniservee
     user: uniserve_user
