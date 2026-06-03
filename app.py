@@ -84,7 +84,10 @@ if os.environ.get('RENDER'):  # Render.com
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
         raise RuntimeError('DATABASE_URL is required when RENDER=true')
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace('postgres://', 'postgresql://')
+    # Convert to psycopg v3 dialect for SQLAlchemy
+    database_url = database_url.replace('postgres://', 'postgresql+psycopg://')
+    database_url = database_url.replace('postgresql://', 'postgresql+psycopg://')
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     DEBUG = False
 else:  # Local development
     app.config['SECRET_KEY'] = 'uniserve-secret-key-2024'
