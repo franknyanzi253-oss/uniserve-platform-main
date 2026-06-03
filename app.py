@@ -47,20 +47,23 @@ def verify_google_token(id_token):
         print("Google token verification failed:", e)
     return None
 
-# Initialize SocketIO dynamically based on eventlet availability
-async_mode = None
-try:
-    import eventlet
-    # Test if it actually works to import
-    import eventlet.convenience
-    async_mode = 'eventlet'
-except Exception as e:
-    print('Eventlet unavailable or incompatible, falling back to threading:', e)
+# Initialize SocketIO: force safe backend on Render, prefer eventlet locally
+if os.environ.get('RENDER'):
     async_mode = 'threading'
+else:
+    async_mode = None
+    try:
+        import eventlet
+        # Test if it actually works to import
+        import eventlet.convenience
+        async_mode = 'eventlet'
+    except Exception as e:
+        print('Eventlet unavailable or incompatible, falling back to threading:', e)
+        async_mode = 'threading'
 
 try:
     socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
-except ValueError as e:
+except Exception as e:
     print('SocketIO initialization failed with async_mode', async_mode, e)
     socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
