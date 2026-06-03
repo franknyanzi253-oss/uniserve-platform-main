@@ -47,20 +47,22 @@ def verify_google_token(id_token):
         print("Google token verification failed:", e)
     return None
 
-# Initialize SocketIO dynamically based on environment / eventlet availability
+# Initialize SocketIO dynamically based on eventlet availability
 async_mode = None
-if os.environ.get('RENDER'):
+try:
+    import eventlet
+    # Test if it actually works to import
+    import eventlet.convenience
     async_mode = 'eventlet'
-else:
-    try:
-        import eventlet
-        # Test if it actually works to import (handles greenlet module missing on newer python)
-        import eventlet.convenience
-        async_mode = 'eventlet'
-    except Exception:
-        async_mode = 'threading'
+except Exception as e:
+    print('Eventlet unavailable or incompatible, falling back to threading:', e)
+    async_mode = 'threading'
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
+try:
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode=async_mode)
+except ValueError as e:
+    print('SocketIO initialization failed with async_mode', async_mode, e)
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 
 @socketio.on('connect')
@@ -76,7 +78,10 @@ def serve_sw():
 # Configuration - Different for development vs production
 if os.environ.get('RENDER'):  # Render.com
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace('postgres://', 'postgresql://')
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        raise RuntimeError('DATABASE_URL is required when RENDER=true')
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace('postgres://', 'postgresql://')
     DEBUG = False
 else:  # Local development
     app.config['SECRET_KEY'] = 'uniserve-secret-key-2024'
